@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — LITE HOUSE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+<div class="app-layout">
+  <!-- Sidebar injected by JS -->
+  <div class="main-content">
+    <!-- Topbar injected by JS -->
+    <div class="page-body">
+
+      <!-- Wallet Stats -->
+      <div class="stat-grid" id="stat-grid">
+        <div class="stat-card gold fade-in">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label">Available Balance</div>
+          <div class="stat-value mono" id="stat-balance">—</div>
+          <div class="stat-sub">USDT equivalent</div>
+        </div>
+        <div class="stat-card cyan fade-in">
+          <div class="stat-icon">⛏</div>
+          <div class="stat-label">Mining Earnings</div>
+          <div class="stat-value mono" id="stat-mining">—</div>
+          <div class="stat-sub">Total accrued</div>
+        </div>
+        <div class="stat-card green fade-in">
+          <div class="stat-icon">🔗</div>
+          <div class="stat-label">Referral Earnings</div>
+          <div class="stat-value mono" id="stat-referral">—</div>
+          <div class="stat-sub">Commission earned</div>
+        </div>
+        <div class="stat-card red fade-in">
+          <div class="stat-icon">📤</div>
+          <div class="stat-label">Total Withdrawals</div>
+          <div class="stat-value mono" id="stat-withdrawals">—</div>
+          <div class="stat-sub">Paid out</div>
+        </div>
+      </div>
+
+      <!-- Market Ticker -->
+      <div class="market-ticker fade-in">
+        <div class="ticker-header">
+          <span class="ticker-dot"></span>
+          <span class="ticker-label">Live Market</span>
+          <span class="ticker-brand">LITE HOUSE AI TRADING</span>
+        </div>
+        <div class="coin-grid" id="coin-grid">
+          <div class="coin-item"><div class="coin-symbol">BTC</div><div class="coin-price">—</div><div class="coin-change">—</div></div>
+          <div class="coin-item"><div class="coin-symbol">ETH</div><div class="coin-price">—</div><div class="coin-change">—</div></div>
+          <div class="coin-item"><div class="coin-symbol">SOL</div><div class="coin-price">—</div><div class="coin-change">—</div></div>
+          <div class="coin-item"><div class="coin-symbol">BNB</div><div class="coin-price">—</div><div class="coin-change">—</div></div>
+          <div class="coin-item"><div class="coin-symbol">LTC</div><div class="coin-price">—</div><div class="coin-change">—</div></div>
+          <div class="coin-item"><div class="coin-symbol">TRX</div><div class="coin-price">—</div><div class="coin-change">—</div></div>
+          <div class="coin-item"><div class="coin-symbol">TON</div><div class="coin-price">—</div><div class="coin-change">—</div></div>
+          <div class="coin-item"><div class="coin-symbol">SUI</div><div class="coin-price">—</div><div class="coin-change">—</div></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;" class="dash-grid">
+        <!-- Mining Status -->
+        <div class="mining-widget fade-in">
+          <div class="card-header" style="margin-bottom:16px;">
+            <div>
+              <div class="card-title">AI Trading & Mining</div>
+              <div class="card-subtitle" id="mining-plan-label">Loading plan…</div>
+            </div>
+            <div id="mining-status-badge"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div>
+              <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Daily Reward</div>
+              <div class="mono" style="font-size:1.1rem;color:var(--gold);" id="daily-reward">—</div>
+            </div>
+            <div>
+              <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Next Reward</div>
+              <div class="mono" style="font-size:1.1rem;" id="next-reward">—</div>
+            </div>
+            <div>
+              <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Hash Power</div>
+              <div class="mono" style="font-size:1.1rem;color:var(--cyan);" id="hash-power">—</div>
+            </div>
+            <div>
+              <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Plan Expires</div>
+              <div class="mono" style="font-size:.85rem;" id="plan-expires">—</div>
+            </div>
+          </div>
+          <div style="margin-bottom:8px;display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-2);">
+            <span>Mining Progress</span>
+            <span id="progress-pct">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+          </div>
+          <a href="mining.html" class="btn btn-secondary w-full mt-2" style="margin-top:16px;font-size:.83rem;">Upgrade Plan →</a>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card fade-in">
+          <div class="card-header">
+            <div class="card-title">Quick Actions</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <a href="deposit.html"      class="btn btn-secondary" style="flex-direction:column;gap:6px;padding:20px 12px;height:auto;">
+              <span style="font-size:1.5rem;">⬇</span>
+              <span style="font-size:.8rem;">Deposit</span>
+            </a>
+            <a href="withdraw.html"     class="btn btn-secondary" style="flex-direction:column;gap:6px;padding:20px 12px;height:auto;">
+              <span style="font-size:1.5rem;">⬆</span>
+              <span style="font-size:.8rem;">Withdraw</span>
+            </a>
+            <a href="mining.html"       class="btn btn-secondary" style="flex-direction:column;gap:6px;padding:20px 12px;height:auto;">
+              <span style="font-size:1.5rem;">⛏</span>
+              <span style="font-size:.8rem;">Mining</span>
+            </a>
+            <a href="referral.html"     class="btn btn-secondary" style="flex-direction:column;gap:6px;padding:20px 12px;height:auto;">
+              <span style="font-size:1.5rem;">🔗</span>
+              <span style="font-size:.8rem;">Referral</span>
+            </a>
+          </div>
+          <div style="margin-top:16px;padding:14px;background:var(--surface-2);border-radius:var(--radius-sm);border:1px solid var(--border);">
+            <div style="font-size:.72rem;color:var(--text-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Your Referral Code</div>
+            <div class="ref-code-box">
+              <div class="ref-code" id="user-ref-code">—</div>
+              <button class="btn btn-sm btn-secondary" onclick="copyRefCode()">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Transactions -->
+      <div class="card fade-in" style="margin-top:20px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Recent Transactions</div>
+            <div class="card-subtitle">Last 10 activity records</div>
+          </div>
+          <a href="transactions.html" class="btn btn-sm btn-secondary">View All</a>
+        </div>
+        <div class="table-wrap">
+          <table id="recent-tx-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Note</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="recent-tx-body">
+              <tr><td colspan="4"><div class="empty-state"><div class="empty-state-icon">📭</div><h3>No transactions yet</h3></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/rewards.js"></script>
+<script>
+  const HASH_POWERS = { free:"120 MH/s", basic:"250 MH/s", executive:"600 MH/s", premium:"1.2 TH/s" };
+  const COINS_IDS   = "bitcoin,ethereum,solana,binancecoin,litecoin,tron,the-open-network,sui";
+  const COIN_SYMS   = ["BTC","ETH","SOL","BNB","LTC","TRX","TON","SUI"];
+
+  buildSidebar("dashboard");
+  buildTopbar("Dashboard");
+
+  requireAuth(async (user, userData) => {
+    populateSidebarUser(userData);
+    renderStats(userData);
+    renderMiningWidget(userData);
+    renderRefCode(userData);
+    loadMarketPrices();
+    loadRecentTransactions(user.uid);
+
+    // Check rewards
+    const result = await checkAndDistributeRewards(user.uid, userData);
+    if (result?.rewarded) {
+      showToast(`🎉 Daily reward of $${result.amount} distributed!`, "success");
+      const fresh = await db.collection("users").doc(user.uid).get();
+      renderStats(fresh.data());
+    }
+
+    // Live countdown
+    setInterval(() => {
+      const nrEl = document.getElementById("next-reward");
+      if (nrEl && userData.lastRewardTime) {
+        nrEl.textContent = getTimeToNextReward(userData.lastRewardTime);
+      }
+    }, 60000);
+  });
+
+  function renderStats(d) {
+    const totalW = 0; // loaded separately
+    setText("stat-balance",     `$${formatCurrency(d.walletBalance)}`);
+    setText("stat-mining",      `$${formatCurrency(d.tradingEarnings)}`);
+    setText("stat-referral",    `$${formatCurrency(d.referralEarnings)}`);
+    loadWithdrawalTotal(firebase.auth().currentUser?.uid);
+  }
+
+  async function loadWithdrawalTotal(uid) {
+    if (!uid) return;
+    const snap = await db.collection("withdrawals")
+      .where("userId","==",uid)
+      .where("status","==","paid").get();
+    let total = 0;
+    snap.forEach(d => total += (d.data().amount||0));
+    setText("stat-withdrawals", `$${formatCurrency(total)}`);
+  }
+
+  function renderMiningWidget(d) {
+    const plan = PLANS[d.activePlan];
+    if (!plan || !d.tradingActive) {
+      setText("mining-plan-label","No active plan");
+      document.getElementById("mining-status-badge").innerHTML =
+        `<span class="badge badge-rejected">Inactive</span>`;
+      setText("daily-reward","$0.00");
+      setText("next-reward","—");
+      setText("hash-power","0 MH/s");
+      setText("plan-expires","—");
+      return;
+    }
+
+    const dailyReward = ((plan.cost * plan.roiPercent / 100) / plan.durationDays).toFixed(4);
+    const progress    = getPlanProgress(d.tradingStartTime, plan.durationDays);
+    const expiry      = d.planEndDate?.toDate ? d.planEndDate.toDate() : new Date(d.planEndDate);
+
+    setText("mining-plan-label", `${plan.cost===5?"Free":""} ${PLANS[d.activePlan]?d.activePlan.charAt(0).toUpperCase()+d.activePlan.slice(1):""} Plan`);
+    document.getElementById("mining-status-badge").innerHTML =
+      `<span class="badge badge-active"><span class="mining-status-dot"></span>Active</span>`;
+    setText("daily-reward",  `$${dailyReward}`);
+    setText("next-reward",   getTimeToNextReward(d.lastRewardTime));
+    setText("hash-power",    HASH_POWERS[d.activePlan] || "—");
+    setText("plan-expires",  expiry.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}));
+    setText("progress-pct",  `${progress}%`);
+    document.getElementById("progress-fill").style.width = `${progress}%`;
+  }
+
+  function renderRefCode(d) {
+    setText("user-ref-code", d.referralCode || "—");
+  }
+
+  function copyRefCode() {
+    const code = document.getElementById("user-ref-code").textContent;
+    navigator.clipboard.writeText(code);
+    showToast("Referral code copied!", "success");
+  }
+
+  async function loadRecentTransactions(uid) {
+    const snap = await db.collection("transactions")
+      .where("userId","==",uid)
+      .orderBy("createdAt","desc")
+      .limit(10).get();
+    const tbody = document.getElementById("recent-tx-body");
+    if (snap.empty) return;
+    const typeColors = { deposit:"badge-approved", withdrawal:"badge-pending", reward:"badge-paid", referral_bonus:"badge-active", plan_purchase:"badge-pending" };
+    const typeLabels = { deposit:"Deposit", withdrawal:"Withdrawal", reward:"Mining Reward", referral_bonus:"Referral Bonus", plan_purchase:"Plan Purchase" };
+    tbody.innerHTML = snap.docs.map(doc => {
+      const t = doc.data();
+      return `<tr>
+        <td><span class="badge ${typeColors[t.type]||'badge-pending'}">${typeLabels[t.type]||t.type}</span></td>
+        <td class="mono text-green">+$${formatCurrency(t.amount)}</td>
+        <td style="color:var(--text-2);font-size:.82rem;">${t.note||"—"}</td>
+        <td style="color:var(--text-3);font-size:.78rem;">${formatDate(t.createdAt)}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  async function loadMarketPrices() {
+    try {
+      const res  = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${COINS_IDS}&vs_currencies=usd&include_24hr_change=true`);
+      const data = await res.json();
+      const map  = {
+        BTC:data.bitcoin, ETH:data.ethereum, SOL:data.solana,
+        BNB:data.binancecoin, LTC:data.litecoin, TRX:data.tron,
+        TON:data["the-open-network"], SUI:data.sui
+      };
+      const items = document.querySelectorAll(".coin-item");
+      items.forEach(el => {
+        const sym  = el.querySelector(".coin-symbol").textContent;
+        const coin = map[sym];
+        if (!coin) return;
+        const price  = coin.usd;
+        const change = coin.usd_24h_change;
+        el.querySelector(".coin-price").textContent =
+          price >= 1 ? `$${price.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}` : `$${price.toFixed(6)}`;
+        const changeEl = el.querySelector(".coin-change");
+        changeEl.textContent = `${change >= 0 ? "▲" : "▼"} ${Math.abs(change).toFixed(2)}%`;
+        changeEl.className   = `coin-change ${change >= 0 ? "up" : "down"}`;
+      });
+    } catch { /* API limit — silently fail */ }
+  }
+
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+</script>
+<style>
+  @media(max-width:700px){ .dash-grid{ grid-template-columns:1fr !important; } }
+</style>
+</body>
+</html>

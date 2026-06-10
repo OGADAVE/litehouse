@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Transactions — LITE HOUSE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    .filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+    .filter-btn{padding:7px 16px;border-radius:20px;font-size:.78rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);transition:all .2s;}
+    .filter-btn.active{background:var(--gold-glow);border-color:rgba(240,192,64,.3);color:var(--gold);}
+    .tx-amount.credit{color:var(--green);}
+    .tx-amount.debit{color:var(--red);}
+    .tx-icon{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:.9rem;flex-shrink:0;}
+    .tx-row-inner{display:flex;align-items:center;gap:12px;}
+    .pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px;}
+    .page-btn{width:34px;height:34px;border-radius:6px;display:grid;place-items:center;font-size:.82rem;cursor:pointer;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);transition:all .2s;}
+    .page-btn.active{background:var(--gold-glow);border-color:rgba(240,192,64,.3);color:var(--gold);}
+    .page-btn:hover:not(.active){background:var(--surface-3);}
+    .summary-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+    .summary-pill{flex:1;min-width:120px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;}
+    .summary-pill .s-label{font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+    .summary-pill .s-val{font-family:var(--font-mono);font-size:1rem;}
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <div class="page-body">
+
+      <!-- Summary pills -->
+      <div class="summary-row" id="summary-row">
+        <div class="summary-pill">
+          <div class="s-label">Total Deposits</div>
+          <div class="s-val text-green" id="sum-deposits">—</div>
+        </div>
+        <div class="summary-pill">
+          <div class="s-label">Total Withdrawals</div>
+          <div class="s-val text-red" id="sum-withdrawals">—</div>
+        </div>
+        <div class="summary-pill">
+          <div class="s-label">Mining Rewards</div>
+          <div class="s-val text-gold" id="sum-rewards">—</div>
+        </div>
+        <div class="summary-pill">
+          <div class="s-label">Referral Bonuses</div>
+          <div class="s-val text-cyan" id="sum-referral">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Transaction History</div>
+            <div class="card-subtitle" id="tx-count">Loading…</div>
+          </div>
+          <button class="btn btn-sm btn-secondary" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="filter-bar">
+          <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+          <button class="filter-btn" onclick="setFilter('deposit',this)">Deposits</button>
+          <button class="filter-btn" onclick="setFilter('withdrawal',this)">Withdrawals</button>
+          <button class="filter-btn" onclick="setFilter('reward',this)">Rewards</button>
+          <button class="filter-btn" onclick="setFilter('referral_bonus',this)">Referrals</button>
+          <button class="filter-btn" onclick="setFilter('plan_purchase',this)">Plans</button>
+          <button class="filter-btn" onclick="setFilter('team_bonus',this)">🏆 Bonuses</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Transaction</th>
+                <th>Amount</th>
+                <th>Note</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="tx-body">
+              <tr><td colspan="5" style="text-align:center;padding:40px;">
+                <div class="empty-state"><div class="empty-state-icon">📭</div><h3>Loading transactions…</h3></div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/rewards.js"></script>
+<script>
+  buildSidebar("transactions");
+  buildTopbar("Transactions");
+
+  let allTx = [], filtered = [], currentFilter = "all", currentPage = 1;
+  const PAGE_SIZE = 15;
+
+  const TX_META = {
+    deposit:       { label:"Deposit",         icon:"⬇", iconBg:"var(--green-dim)",  credit:true  },
+    withdrawal:    { label:"Withdrawal",       icon:"⬆", iconBg:"var(--red-dim)",    credit:false },
+    reward:        { label:"Mining Reward",    icon:"⛏", iconBg:"var(--gold-glow)",  credit:true  },
+    referral_bonus:{ label:"Referral Bonus",   icon:"🔗", iconBg:"var(--cyan-dim)",   credit:true  },
+    plan_purchase: { label:"Plan Activation",    icon:"📋", iconBg:"var(--surface-3)",              credit:false },
+    team_bonus:    { label:"Team Leader Bonus",  icon:"🏆", iconBg:"rgba(191,127,255,0.15)",          credit:true  },
+  };
+
+  requireAuth(async (user, userData) => {
+    populateSidebarUser(userData);
+    await loadTransactions(user.uid);
+    computeSummary();
+  });
+
+  async function loadTransactions(uid) {
+    const snap = await db.collection("transactions")
+      .where("userId","==",uid)
+      .orderBy("createdAt","desc")
+      .limit(200).get();
+    allTx = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    applyFilter(currentFilter);
+  }
+
+  function setFilter(type, btn) {
+    currentFilter = type;
+    currentPage   = 1;
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    applyFilter(type);
+  }
+
+  function applyFilter(type) {
+    filtered = type === "all" ? [...allTx] : allTx.filter(t => t.type === type);
+    const count = filtered.length;
+    document.getElementById("tx-count").textContent = `${count} transaction${count!==1?"s":""}`;
+    renderPage(1);
+  }
+
+  function renderPage(page) {
+    currentPage = page;
+    const start = (page-1) * PAGE_SIZE;
+    const items = filtered.slice(start, start + PAGE_SIZE);
+    const tbody = document.getElementById("tx-body");
+
+    if (!items.length) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">📭</div><h3>No transactions found</h3></div></td></tr>`;
+      document.getElementById("pagination").innerHTML = "";
+      return;
+    }
+
+    tbody.innerHTML = items.map(t => {
+      const meta   = TX_META[t.type] || { label:t.type, icon:"•", iconBg:"var(--surface-3)", credit:true };
+      const isCredit = meta.credit;
+      const amountStr = `${isCredit?"+":"-"}$${formatCurrency(t.amount)}`;
+      return `<tr>
+        <td>
+          <div class="tx-row-inner">
+            <div class="tx-icon" style="background:${meta.iconBg};">${meta.icon}</div>
+            <span style="font-weight:500;font-size:.875rem;">${meta.label}</span>
+          </div>
+        </td>
+        <td class="mono tx-amount ${isCredit?'credit':'debit'}" style="font-weight:600;">${amountStr}</td>
+        <td style="color:var(--text-2);font-size:.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.note||"—"}</td>
+        <td><span class="badge badge-approved">Confirmed</span></td>
+        <td class="mono" style="font-size:.75rem;color:var(--text-3);">${formatDate(t.createdAt)}</td>
+      </tr>`;
+    }).join("");
+
+    renderPagination();
+  }
+
+  function renderPagination() {
+    const pages    = Math.ceil(filtered.length / PAGE_SIZE);
+    const el       = document.getElementById("pagination");
+    if (pages <= 1) { el.innerHTML = ""; return; }
+    let html = "";
+    if (currentPage > 1)   html += `<button class="page-btn" onclick="renderPage(${currentPage-1})">‹</button>`;
+    for (let i = Math.max(1,currentPage-2); i <= Math.min(pages,currentPage+2); i++) {
+      html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="renderPage(${i})">${i}</button>`;
+    }
+    if (currentPage < pages) html += `<button class="page-btn" onclick="renderPage(${currentPage+1})">›</button>`;
+    el.innerHTML = html;
+  }
+
+  function computeSummary() {
+    let deposits=0, withdrawals=0, rewards=0, referrals=0;
+    allTx.forEach(t => {
+      if (t.type==="deposit")         deposits    += t.amount||0;
+      if (t.type==="withdrawal")      withdrawals += t.amount||0;
+      if (t.type==="reward")          rewards     += t.amount||0;
+      if (t.type==="referral_bonus")  referrals   += t.amount||0;
+    });
+    setText("sum-deposits",    `$${formatCurrency(deposits)}`);
+    setText("sum-withdrawals", `$${formatCurrency(withdrawals)}`);
+    setText("sum-rewards",     `$${formatCurrency(rewards)}`);
+    setText("sum-referral",    `$${formatCurrency(referrals)}`);
+  }
+
+  function exportCSV() {
+    const rows = [["Type","Amount","Note","Date"]];
+    filtered.forEach(t => {
+      const meta = TX_META[t.type] || { label:t.type, credit:true };
+      rows.push([
+        meta.label,
+        `${meta.credit?"+":"-"}${formatCurrency(t.amount)}`,
+        t.note || "",
+        formatDate(t.createdAt)
+      ]);
+    });
+    const csv  = rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type:"text/csv" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = "litehouse-transactions.csv";
+    a.click(); URL.revokeObjectURL(url);
+    showToast("CSV exported!", "success");
+  }
+
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+</script>
+</body>
+</html>

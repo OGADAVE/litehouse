@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LITE HOUSE — AI Crypto Trading & Mining</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .auth-tabs { display:flex; gap:0; margin-bottom:28px; background:var(--surface-2); border-radius:var(--radius-sm); padding:4px; }
+    .auth-tab  { flex:1; padding:9px; text-align:center; font-size:0.85rem; font-weight:600; cursor:pointer; border-radius:6px; color:var(--text-2); transition:all .2s; border:none; background:none; font-family:inherit; }
+    .auth-tab.active { background:var(--surface-3); color:var(--text-1); }
+    .tab-pane { display:none; }
+    .tab-pane.active { display:block; }
+    .link-btn { background:none; border:none; color:var(--gold); cursor:pointer; font-size:0.85rem; text-decoration:underline; font-family:inherit; }
+    .forgot-row { display:flex; justify-content:flex-end; margin-top:-6px; margin-bottom:14px; }
+  </style>
+</head>
+<body class="auth-body">
+
+<div class="auth-card fade-in">
+  <!-- Logo -->
+  <div style="text-align:center;">
+    <img src="assets/logo.png" alt="LITE HOUSE" class="auth-logo-img"/>
+  </div>
+
+  <!-- Tabs -->
+  <div class="auth-tabs">
+    <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+    <button class="auth-tab" onclick="switchTab('register')">Register</button>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="tab-pane active" id="tab-login">
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input id="login-email" type="email" class="form-control" placeholder="you@example.com"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input id="login-password" type="password" class="form-control" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"/>
+    </div>
+    <div class="forgot-row">
+      <button class="link-btn" onclick="openForgot()">Forgot password?</button>
+    </div>
+    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
+    <p style="text-align:center;margin-top:16px;font-size:.82rem;color:var(--text-2);">
+      No account? <button class="link-btn" onclick="switchTab('register')">Register here</button>
+    </p>
+  </div>
+
+  <!-- REGISTER -->
+  <div class="tab-pane" id="tab-register">
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input id="reg-username" type="text" class="form-control" placeholder="e.g. cryptoking"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input id="reg-email" type="email" class="form-control" placeholder="you@example.com"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input id="reg-password" type="password" class="form-control" placeholder="Min 6 characters"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Referral Code <span style="color:var(--text-3);font-weight:400">(Optional)</span></label>
+      <input id="reg-referral" type="text" class="form-control" placeholder="e.g. OGD123"/>
+    </div>
+    <button class="btn btn-primary" id="reg-btn" onclick="doRegister()">Create Account</button>
+    <p style="text-align:center;margin-top:16px;font-size:.82rem;color:var(--text-2);">
+      Already registered? <button class="link-btn" onclick="switchTab('login')">Sign in</button>
+    </p>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal-overlay" id="forgot-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Reset Password</h3>
+      <button class="btn btn-icon btn-secondary" onclick="closeForgot()">&#10005;</button>
+    </div>
+    <p style="font-size:.85rem;color:var(--text-2);margin-bottom:20px;">Enter your email and we'll send a reset link.</p>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input id="forgot-email" type="email" class="form-control" placeholder="you@example.com"/>
+    </div>
+    <button class="btn btn-primary" id="forgot-btn" onclick="doForgot()">Send Reset Link</button>
+  </div>
+</div>
+
+<!-- Firebase SDK (compat - must load before firebase-config.js) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script>
+  // Redirect if already logged in — with loop guard
+  var redirectAttempts = 0;
+  auth.onAuthStateChanged(function (user) {
+    if (user && user.emailVerified) {
+      redirectAttempts++;
+      // If we've tried redirecting more than twice, something is wrong upstream
+      // Stop redirecting and let the user stay on login to sign in fresh
+      if (redirectAttempts > 2) {
+        console.warn("Redirect loop detected — staying on login page.");
+        auth.signOut();
+        return;
+      }
+      window.location.href = "pages/dashboard.html";
+    } else if (user && !user.emailVerified) {
+      window.location.href = "pages/verify-email.html";
+    }
+  });
+
+  function switchTab(tab) {
+    document.querySelectorAll(".auth-tab").forEach(function (t, i) {
+      t.classList.toggle("active", (i === 0 && tab === "login") || (i === 1 && tab === "register"));
+    });
+    document.getElementById("tab-login").classList.toggle("active", tab === "login");
+    document.getElementById("tab-register").classList.toggle("active", tab === "register");
+  }
+
+  function doLogin() {
+    var email    = document.getElementById("login-email").value.trim();
+    var password = document.getElementById("login-password").value;
+    var btn      = document.getElementById("login-btn");
+
+    if (!email || !password) { showToast("Please fill all fields.", "error"); return; }
+
+    setLoading(btn, true);
+    auth.signInWithEmailAndPassword(email, password)
+      .then(function (cred) {
+        if (!cred.user.emailVerified) {
+          auth.signOut();
+          showToast("Please verify your email first.", "error");
+          setTimeout(function () { window.location.href = "pages/verify-email.html"; }, 1500);
+          return;
+        }
+        showToast("Welcome back!", "success");
+        setTimeout(function () { window.location.href = "pages/dashboard.html"; }, 800);
+      })
+      .catch(function (e) {
+        showToast(friendlyError(e.code), "error");
+        setLoading(btn, false, "Sign In");
+      });
+  }
+
+  function doRegister() {
+    var username = document.getElementById("reg-username").value.trim();
+    var email    = document.getElementById("reg-email").value.trim();
+    var password = document.getElementById("reg-password").value;
+    var refCode  = document.getElementById("reg-referral").value.trim().toUpperCase();
+    var btn      = document.getElementById("reg-btn");
+
+    if (!username || !email || !password) { showToast("Please fill all required fields.", "error"); return; }
+    if (password.length < 6)              { showToast("Password must be at least 6 characters.", "error"); return; }
+
+    setLoading(btn, true);
+
+    // Check referral code first if provided
+    var referralCheck = refCode
+      ? db.collection("users").where("referralCode", "==", refCode).limit(1).get()
+      : Promise.resolve(null);
+
+    referralCheck.then(function (refSnap) {
+      var referredBy = null;
+      if (refCode) {
+        if (!refSnap || refSnap.empty) {
+          showToast("Invalid referral code.", "error");
+          setLoading(btn, false, "Create Account");
+          return;
+        }
+        referredBy = refSnap.docs[0].id;
+      }
+
+      return auth.createUserWithEmailAndPassword(email, password)
+        .then(function (cred) {
+          var uid    = cred.user.uid;
+          var myCode = generateReferralCode(username);
+          var planEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+          // Send verification email (non-blocking - don't fail if this fails)
+          cred.user.sendEmailVerification().catch(function (e) {
+            console.warn("Verification email failed:", e.message);
+          });
+
+          var userData = {
+            username:           username,
+            email:              email,
+            referralCode:       myCode,
+            referredBy:         referredBy,
+            walletBalance:      5,
+            tradingEarnings:    0,
+            referralEarnings:   0,
+            activePlan:         "free",
+            tradingActive:      true,
+            tradingStartTime:   firebase.firestore.FieldValue.serverTimestamp(),
+            lastRewardTime:     firebase.firestore.FieldValue.serverTimestamp(),
+            planEndDate:        planEnd,
+            milestone20Claimed: false,
+            milestone50Claimed: false,
+            createdAt:          firebase.firestore.FieldValue.serverTimestamp()
+          };
+
+          // Write user doc — this is critical
+          return db.collection("users").doc(uid).set(userData)
+            .then(function () {
+              // Write transaction log — NON-BLOCKING, won't crash registration if it fails
+              db.collection("transactions").add({
+                userId:    uid,
+                type:      "plan_purchase",
+                amount:    5,
+                plan:      "free",
+                note:      "Free starter plan credited",
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              }).catch(function (e) {
+                console.warn("Transaction log failed (non-critical):", e.message);
+              });
+
+              // Registration successful
+              showToast("Account created! Check your email to verify.", "success");
+              setTimeout(function () { window.location.href = "pages/verify-email.html"; }, 1500);
+            });
+        });
+
+    }).catch(function (e) {
+      console.error("Registration error:", e.code, e.message);
+      showToast(friendlyError(e.code, e.message), "error");
+      setLoading(btn, false, "Create Account");
+    });
+  }
+
+  function doForgot() {
+    var email = document.getElementById("forgot-email").value.trim();
+    var btn   = document.getElementById("forgot-btn");
+    if (!email) { showToast("Enter your email.", "error"); return; }
+    setLoading(btn, true);
+    auth.sendPasswordResetEmail(email)
+      .then(function () {
+        showToast("Reset link sent! Check your inbox.", "success");
+        closeForgot();
+        setLoading(btn, false, "Send Reset Link");
+      })
+      .catch(function (e) {
+        showToast(friendlyError(e.code), "error");
+        setLoading(btn, false, "Send Reset Link");
+      });
+  }
+
+  function openForgot()  { document.getElementById("forgot-modal").classList.add("open"); }
+  function closeForgot() { document.getElementById("forgot-modal").classList.remove("open"); }
+
+  function friendlyError(code, rawMessage) {
+    var map = {
+      "auth/user-not-found":         "No account with that email.",
+      "auth/wrong-password":         "Incorrect password.",
+      "auth/invalid-credential":     "Invalid email or password.",
+      "auth/email-already-in-use":   "Email already registered. Try signing in.",
+      "auth/invalid-email":          "Invalid email address.",
+      "auth/weak-password":          "Password too weak. Use at least 6 characters.",
+      "auth/too-many-requests":      "Too many attempts. Try again in a few minutes.",
+      "auth/network-request-failed": "Network error. Check your connection.",
+      "auth/operation-not-allowed":  "Email/Password login is not enabled. Enable it in Firebase Console → Authentication.",
+      "permission-denied":           "Firestore rules are blocking this. Publish your firestore.rules in Firebase Console.",
+      "not-found":                   "Firestore database not found. Create it in Firebase Console → Firestore Database."
+    };
+    // Show the mapped message, or the raw Firebase message, never just "something went wrong"
+    return map[code] || (rawMessage ? "Error: " + rawMessage : "Something went wrong (code: " + code + ")");
+  }
+
+  // Enter key support
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    if (document.getElementById("tab-login").classList.contains("active")) doLogin();
+    else doRegister();
+  });
+</script>
+</body>
+</html>

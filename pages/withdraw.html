@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Withdraw — LITE HOUSE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <div class="page-body">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px;margin:0 auto;" class="w-grid">
+
+        <!-- Withdraw Form -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Request Withdrawal</div>
+              <div class="card-subtitle">Withdrawals paid in LTC (Litecoin)</div>
+            </div>
+          </div>
+
+          <!-- Locked notice -->
+          <div id="locked-notice" style="display:none;background:var(--red-dim);border:1px solid rgba(255,77,106,.25);border-radius:var(--radius-sm);padding:16px;text-align:center;">
+            <div style="font-size:1.5rem;margin-bottom:8px;">🔒</div>
+            <div style="font-weight:600;margin-bottom:6px;">Withdrawals Locked</div>
+            <div style="font-size:.82rem;color:var(--text-2);">Withdrawals are not available on the Free plan. Upgrade to Basic, Executive, or Premium to enable withdrawals.</div>
+            <a href="mining.html" class="btn btn-primary" style="margin-top:14px;width:auto;display:inline-flex;">Upgrade Plan →</a>
+          </div>
+
+          <!-- Withdraw form -->
+          <div id="withdraw-form">
+            <div style="background:var(--gold-glow);border:1px solid rgba(240,192,64,.25);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;">
+              <div style="font-size:.72rem;color:var(--text-2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Available Balance</div>
+              <div class="mono" style="font-size:1.8rem;color:var(--gold);" id="avail-balance">—</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Amount (USD)</label>
+              <input type="number" class="form-control" id="wd-amount" placeholder="Min. $5.00" min="5"/>
+              <div class="form-hint">Minimum withdrawal: $5.00</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">LTC Wallet Address</label>
+              <input type="text" class="form-control" id="wd-address" placeholder="Your Litecoin address (L...)"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Network</label>
+              <input class="form-control" value="Litecoin Network (LTC)" disabled/>
+            </div>
+            <div style="background:var(--surface-2);border-radius:var(--radius-sm);padding:12px 14px;font-size:.8rem;color:var(--text-2);margin-bottom:20px;">
+              ℹ &nbsp;Withdrawals are processed immediately, it's usually between 1 - 30 minutes. Withdrawals will be sent as LTC to your provided address.
+            </div>
+            <button class="btn btn-primary" id="wd-btn" onclick="submitWithdrawal()">Request Withdrawal</button>
+          </div>
+        </div>
+
+        <!-- Withdrawal History -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Withdrawal History</div>
+          </div>
+          <div id="wd-history">
+            <div class="empty-state"><div class="empty-state-icon">📭</div><h3>No withdrawals yet</h3></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/rewards.js"></script>
+<script>
+  buildSidebar("withdraw");
+  buildTopbar("Withdraw Funds");
+
+  let currentUser, userData;
+
+  requireAuth(async (user, data) => {
+    currentUser = user; userData = data;
+    populateSidebarUser(data);
+
+    const plan = PLANS[data.activePlan];
+    const canWithdraw = plan && plan.withdrawEnabled && data.tradingActive;
+
+    document.getElementById("avail-balance").textContent = `$${formatCurrency(data.walletBalance)}`;
+
+    if (!canWithdraw) {
+      document.getElementById("locked-notice").style.display = "block";
+      document.getElementById("withdraw-form").style.display  = "none";
+    }
+
+    loadWithdrawalHistory(user.uid);
+  });
+
+  async function submitWithdrawal() {
+    const amount  = parseFloat(document.getElementById("wd-amount").value);
+    const address = document.getElementById("wd-address").value.trim();
+    const btn     = document.getElementById("wd-btn");
+
+    if (!amount || amount < 5)       return showToast("Minimum withdrawal is $5.", "error");
+    if (!address)                    return showToast("Please enter your LTC wallet address.", "error");
+    if (amount > userData.walletBalance) return showToast("Insufficient balance.", "error");
+
+    setLoading(btn, true);
+    try {
+      await db.collection("withdrawals").add({
+        userId:        currentUser.uid,
+        amount,
+        network:       "Litecoin Network",
+        walletAddress: address,
+        status:        "pending",
+        createdAt:     firebase.firestore.FieldValue.serverTimestamp()
+      });
+      // Deduct balance immediately and log
+      const batch = db.batch();
+      batch.update(db.collection("users").doc(currentUser.uid), {
+        walletBalance: firebase.firestore.FieldValue.increment(-amount)
+      });
+      batch.set(db.collection("transactions").doc(), {
+        userId: currentUser.uid, type:"withdrawal",
+        amount, note:"LTC withdrawal — pending approval",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await batch.commit();
+
+      showToast("Withdrawal request submitted!", "success");
+      document.getElementById("wd-amount").value   = "";
+      document.getElementById("wd-address").value  = "";
+      document.getElementById("avail-balance").textContent = `$${formatCurrency(userData.walletBalance - amount)}`;
+      userData.walletBalance -= amount;
+      loadWithdrawalHistory(currentUser.uid);
+    } catch(e) {
+      showToast("Request failed. Please try again.", "error");
+    } finally {
+      setLoading(btn, false, "Request Withdrawal");
+    }
+  }
+
+  async function loadWithdrawalHistory(uid) {
+    const snap = await db.collection("withdrawals")
+      .where("userId","==",uid)
+      .orderBy("createdAt","desc")
+      .limit(20).get();
+    const el = document.getElementById("wd-history");
+    if (snap.empty) return;
+    el.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Amount</th><th>Address</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody>${snap.docs.map(d => {
+        const w = d.data();
+        return `<tr>
+          <td class="mono">$${formatCurrency(w.amount)}</td>
+          <td style="font-size:.72rem;color:var(--text-2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${w.walletAddress}</td>
+          <td><span class="badge badge-${w.status==='paid'?'paid':w.status==='approved'?'approved':w.status==='rejected'?'rejected':'pending'}">${w.status}</span></td>
+          <td style="font-size:.75rem;color:var(--text-3);">${formatDate(w.createdAt)}</td>
+        </tr>`;
+      }).join("")}</tbody>
+    </table></div>`;
+  }
+</script>
+<style>@media(max-width:680px){.w-grid{grid-template-columns:1fr !important;}}</style>
+</body>
+</html>

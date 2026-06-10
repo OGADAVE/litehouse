@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — LITE HOUSE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    .admin-tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:var(--radius-sm);margin-bottom:24px;overflow-x:auto;flex-wrap:nowrap;}
+    .admin-tab{padding:9px 18px;border-radius:6px;font-size:.82rem;font-weight:600;color:var(--text-2);cursor:pointer;white-space:nowrap;border:none;background:none;transition:all .2s;}
+    .admin-tab.active{background:var(--surface-3);color:var(--gold);}
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;}
+    .action-cell{display:flex;gap:6px;flex-wrap:wrap;}
+    .admin-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:700;letter-spacing:.03em;}
+    .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+    .settings-section{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;}
+    .settings-section h4{font-family:var(--font-display);font-size:.95rem;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+    .inline-save{display:flex;gap:8px;}
+    .inline-save .form-control{flex:1;}
+    .user-row-meta{font-size:.72rem;color:var(--text-3);}
+    .pending-dot{width:8px;height:8px;background:var(--gold);border-radius:50%;display:inline-block;animation:pulse 1.5s infinite;margin-right:6px;}
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <!-- Admin Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo" style="flex-direction:column;align-items:center;gap:6px;">
+      <img src="../assets/logo.png" alt="LITE HOUSE" class="sidebar-logo-img"/>
+      <span style="color:var(--red);font-size:.62rem;background:var(--red-dim);padding:2px 9px;border-radius:4px;font-weight:700;letter-spacing:.06em;">ADMIN PANEL</span>
+      <div class="logo-name" style="font-size:.9rem;">LITE <span>HOUSE</span> <span style="color:var(--red);font-size:.65rem;vertical-align:middle;margin-left:4px;background:var(--red-dim);padding:1px 6px;border-radius:4px;">ADMIN</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Admin Panel</div>
+      <a class="nav-link active" onclick="switchTab('overview')">    <span class="nav-icon">⬡</span> Overview</a>
+      <a class="nav-link" onclick="switchTab('users')">              <span class="nav-icon">👥</span> Users</a>
+      <a class="nav-link" onclick="switchTab('deposits')">           <span class="nav-icon">⬇</span> Deposits <span class="nav-badge" id="dep-badge" style="display:none;">0</span></a>
+      <a class="nav-link" onclick="switchTab('withdrawals')">        <span class="nav-icon">⬆</span> Withdrawals <span class="nav-badge" id="wd-badge" style="display:none;">0</span></a>
+      <a class="nav-link" onclick="switchTab('transactions')">       <span class="nav-icon">🗂</span> Transactions</a>
+      <a class="nav-link" onclick="switchTab('settings')">           <span class="nav-icon">⚙</span> Settings</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="admin-avatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="admin-name">Admin</div>
+          <div class="user-role" style="color:var(--red);">Administrator</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary w-full mt-2" onclick="doSignOut()" style="font-size:.8rem;padding:9px;">⏻ &nbsp;Sign Out</button>
+      <a href="dashboard.html" class="btn btn-secondary w-full mt-1" style="font-size:.78rem;padding:8px;margin-top:6px;">← User Dashboard</a>
+    </div>
+  </div>
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="flex items-center gap-3">
+        <div class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></div>
+        <div class="topbar-title" id="topbar-title">Overview</div>
+      </div>
+      <div class="topbar-actions">
+        <span style="font-size:.75rem;color:var(--text-3);">Last refresh: <span id="last-refresh">—</span></span>
+        <button class="btn btn-sm btn-secondary" onclick="refreshAll()">↺ Refresh</button>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- OVERVIEW -->
+      <div class="tab-panel active" id="panel-overview">
+        <div class="stat-grid">
+          <div class="stat-card gold"><div class="stat-icon">👥</div><div class="stat-label">Total Users</div><div class="stat-value" id="ov-users">—</div></div>
+          <div class="stat-card cyan"><div class="stat-icon">⛏</div><div class="stat-label">Active Miners</div><div class="stat-value" id="ov-miners">—</div></div>
+          <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-label">Total Deposited</div><div class="stat-value mono" id="ov-deposits">—</div></div>
+          <div class="stat-card red"><div class="stat-icon">📤</div><div class="stat-label">Total Withdrawn</div><div class="stat-value mono" id="ov-withdrawals">—</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;" class="ov-grid">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Pending Deposits</div><span class="badge badge-pending" id="pending-dep-count">0</span></div>
+            <div id="quick-deposits"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Pending Withdrawals</div><span class="badge badge-pending" id="pending-wd-count">0</span></div>
+            <div id="quick-withdrawals"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div class="tab-panel" id="panel-users">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">All Users</div><div class="card-subtitle" id="users-count">Loading…</div></div>
+            <input class="form-control" id="user-search" placeholder="Search username or email…" style="width:220px;" oninput="filterUsers()"/>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Balance</th><th>Plan</th><th>Mining</th><th>Earnings</th><th>Joined</th><th>Actions</th></tr></thead>
+              <tbody id="users-tbody">
+                <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-3);">Loading users…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- DEPOSITS -->
+      <div class="tab-panel" id="panel-deposits">
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <button class="btn btn-sm btn-secondary active" id="dep-filter-btn-pending"   onclick="loadDeposits('pending')">⏳ Pending</button>
+          <button class="btn btn-sm btn-secondary" id="dep-filter-btn-approved"         onclick="loadDeposits('approved')">✓ Approved</button>
+          <button class="btn btn-sm btn-secondary" id="dep-filter-btn-rejected"         onclick="loadDeposits('rejected')">✕ Rejected</button>
+          <button class="btn btn-sm btn-secondary" id="dep-filter-btn-all"              onclick="loadDeposits('all')">All</button>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="dep-table-title">Pending Deposits</div>
+            <span class="badge badge-pending" id="dep-table-count">0</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Amount</th><th>Crypto</th><th>Network</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="deposits-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- WITHDRAWALS -->
+      <div class="tab-panel" id="panel-withdrawals">
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <button class="btn btn-sm btn-secondary" id="wd-filter-btn-pending"  onclick="loadWithdrawals('pending')">⏳ Pending</button>
+          <button class="btn btn-sm btn-secondary" id="wd-filter-btn-approved" onclick="loadWithdrawals('approved')">✓ Approved</button>
+          <button class="btn btn-sm btn-secondary" id="wd-filter-btn-paid"     onclick="loadWithdrawals('paid')">💳 Paid</button>
+          <button class="btn btn-sm btn-secondary" id="wd-filter-btn-rejected" onclick="loadWithdrawals('rejected')">✕ Rejected</button>
+          <button class="btn btn-sm btn-secondary" id="wd-filter-btn-all"      onclick="loadWithdrawals('all')">All</button>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="wd-table-title">Pending Withdrawals</div>
+            <span class="badge badge-pending" id="wd-table-count">0</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Amount</th><th>LTC Address</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="withdrawals-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALL TRANSACTIONS -->
+      <div class="tab-panel" id="panel-transactions">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">All Transactions</div>
+            <div class="card-subtitle" id="all-tx-count">—</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Note</th><th>Date</th></tr></thead>
+              <tbody id="all-tx-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="tab-panel" id="panel-settings">
+        <div class="settings-grid">
+
+          <!-- Wallet Addresses -->
+          <div class="settings-section">
+            <h4>💼 Deposit Wallet Addresses</h4>
+            <div id="wallet-settings-form">
+              <!-- Injected by JS -->
+            </div>
+            <button class="btn btn-primary" onclick="saveWallets()" style="margin-top:10px;">Save Wallets</button>
+          </div>
+
+          <!-- Plan Settings -->
+          <div class="settings-section">
+            <h4>📋 Mining Plan Costs</h4>
+            <div id="plan-settings-form"></div>
+            <button class="btn btn-primary" onclick="savePlans()" style="margin-top:10px;">Save Plans</button>
+          </div>
+
+          <!-- Referral Rate -->
+          <div class="settings-section">
+            <h4>🔗 Referral Commission</h4>
+            <div class="form-group">
+              <label class="form-label">Commission Rate (%)</label>
+              <input type="number" class="form-control" id="ref-rate-input" value="10" min="1" max="50"/>
+              <div class="form-hint">Default: 10%. Applied to every mining reward.</div>
+            </div>
+            <button class="btn btn-primary" onclick="saveRefRate()">Save Rate</button>
+          </div>
+
+          <!-- Make Admin -->
+          <div class="settings-section">
+            <h4>🔑 Admin Management</h4>
+            <div class="form-group">
+              <label class="form-label">Grant Admin by UID</label>
+              <div class="inline-save">
+                <input type="text" class="form-control" id="new-admin-uid" placeholder="Firebase User UID"/>
+                <button class="btn btn-primary" onclick="grantAdmin()" style="width:auto;white-space:nowrap;">Grant</button>
+              </div>
+              <div class="form-hint">User must already have an account.</div>
+            </div>
+            <div class="form-group" style="margin-top:14px;">
+              <label class="form-label">Manual Balance Credit</label>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <input type="text"   class="form-control" id="credit-uid"    placeholder="User UID"/>
+                <input type="number" class="form-control" id="credit-amount" placeholder="Amount ($)"/>
+                <button class="btn btn-success" onclick="manualCredit()">Credit Balance</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div>
+
+<!-- User Detail Modal -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3>User Details</h3>
+      <button class="btn btn-icon btn-secondary" onclick="closeUserModal()">✕</button>
+    </div>
+    <div id="user-modal-body"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/rewards.js"></script>
+<script>
+  let allUsers = [], currentAdminUser;
+
+  auth.onAuthStateChanged(async user => {
+    if (!user) { window.location.href = "../index.html"; return; }
+    const snap = await db.collection("admins").doc(user.uid).get();
+    if (!snap.exists) { window.location.href = "dashboard.html"; return; }
+    currentAdminUser = user;
+    const uSnap = await db.collection("users").doc(user.uid).get();
+    const uData = uSnap.data() || {};
+    document.getElementById("admin-name").textContent   = uData.username || "Admin";
+    document.getElementById("admin-avatar").textContent = (uData.username||"A")[0].toUpperCase();
+    refreshAll();
+  });
+
+  function switchTab(name) {
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".sidebar .nav-link").forEach(l => l.classList.remove("active"));
+    document.getElementById(`panel-${name}`).classList.add("active");
+    document.querySelectorAll(".sidebar .nav-link")[
+      ["overview","users","deposits","withdrawals","transactions","settings"].indexOf(name)
+    ]?.classList.add("active");
+    document.getElementById("topbar-title").textContent =
+      {overview:"Overview",users:"Users",deposits:"Deposits",withdrawals:"Withdrawals",transactions:"Transactions",settings:"Settings"}[name] || name;
+    if (name==="deposits")     loadDeposits("pending");
+    if (name==="withdrawals")  loadWithdrawals("pending");
+    if (name==="users")        loadUsers();
+    if (name==="transactions") loadAllTransactions();
+    if (name==="settings")     loadSettings();
+    closeSidebar();
+  }
+
+  async function refreshAll() {
+    document.getElementById("last-refresh").textContent = new Date().toLocaleTimeString();
+    await Promise.all([ loadOverview(), checkPendingCounts() ]);
+  }
+
+  // ── OVERVIEW ──────────────────────────────────────────────
+
+  async function loadOverview() {
+    const [usersSnap, depoSnap, wdSnap] = await Promise.all([
+      db.collection("users").get(),
+      db.collection("deposits").where("status","==","approved").get(),
+      db.collection("withdrawals").where("status","==","paid").get()
+    ]);
+    let miners=0, totalDep=0, totalWd=0;
+    usersSnap.forEach(d => { if(d.data().tradingActive) miners++; });
+    depoSnap.forEach(d  => totalDep += d.data().amount||0);
+    wdSnap.forEach(d    => totalWd  += d.data().amount||0);
+    setText("ov-users",       usersSnap.size);
+    setText("ov-miners",      miners);
+    setText("ov-deposits",    `$${formatCurrency(totalDep)}`);
+    setText("ov-withdrawals", `$${formatCurrency(totalWd)}`);
+    loadQuickPending();
+  }
+
+  async function loadQuickPending() {
+    const [depSnap, wdSnap] = await Promise.all([
+      db.collection("deposits").where("status","==","pending").orderBy("createdAt","desc").limit(5).get(),
+      db.collection("withdrawals").where("status","==","pending").orderBy("createdAt","desc").limit(5).get()
+    ]);
+    setText("pending-dep-count", depSnap.size);
+    setText("pending-wd-count",  wdSnap.size);
+    renderQuickList("quick-deposits",   depSnap,  "deposit");
+    renderQuickList("quick-withdrawals",wdSnap,   "withdrawal");
+  }
+
+  function renderQuickList(elId, snap, type) {
+    const el = document.getElementById(elId);
+    if (snap.empty) { el.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-3);font-size:.82rem;">No pending ${type}s</div>`; return; }
+    el.innerHTML = snap.docs.map(d => {
+      const item = d.data();
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:.82rem;">
+        <span class="mono">$${formatCurrency(item.amount)}</span>
+        <span style="color:var(--text-2);">${item.crypto||"LTC"}</span>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-sm btn-success" onclick="approve${type==='deposit'?'Deposit':'Withdrawal'}('${d.id}')">✓</button>
+          <button class="btn btn-sm btn-danger"  onclick="reject${type==='deposit'?'Deposit':'Withdrawal'}('${d.id}')">✕</button>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  async function checkPendingCounts() {
+    const [dSnap, wSnap] = await Promise.all([
+      db.collection("deposits").where("status","==","pending").get(),
+      db.collection("withdrawals").where("status","==","pending").get()
+    ]);
+    const dBadge = document.getElementById("dep-badge");
+    const wBadge = document.getElementById("wd-badge");
+    if (dSnap.size > 0) { dBadge.textContent=dSnap.size; dBadge.style.display="inline-block"; }
+    else                  dBadge.style.display = "none";
+    if (wSnap.size > 0) { wBadge.textContent=wSnap.size; wBadge.style.display="inline-block"; }
+    else                  wBadge.style.display = "none";
+  }
+
+  // ── USERS ────────────────────────────────────────────────
+
+  async function loadUsers() {
+    const snap = await db.collection("users").orderBy("createdAt","desc").get();
+    allUsers   = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    setText("users-count", `${allUsers.length} registered users`);
+    renderUsers(allUsers);
+  }
+
+  function filterUsers() {
+    const q = document.getElementById("user-search").value.toLowerCase();
+    const f = q ? allUsers.filter(u => (u.username||"").toLowerCase().includes(q) || (u.email||"").toLowerCase().includes(q)) : allUsers;
+    renderUsers(f);
+  }
+
+  function renderUsers(users) {
+    const tbody = document.getElementById("users-tbody");
+    if (!users.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-3);">No users found</td></tr>`; return; }
+    tbody.innerHTML = users.map(u => `<tr>
+      <td>
+        <div style="font-weight:600;font-size:.875rem;">${u.username||"—"}</div>
+        <div class="user-row-meta">${u.email||"—"}</div>
+      </td>
+      <td class="mono">$${formatCurrency(u.walletBalance)}</td>
+      <td>${u.activePlan ? `<span class="badge badge-pending">${u.activePlan}</span>` : "<span style='color:var(--text-3);font-size:.75rem;'>None</span>"}</td>
+      <td>${u.tradingActive ? '<span class="badge badge-active">Active</span>' : '<span class="badge badge-rejected">Off</span>'}</td>
+      <td class="mono" style="font-size:.8rem;">$${formatCurrency(u.tradingEarnings)}</td>
+      <td style="font-size:.72rem;color:var(--text-3);">${formatDate(u.createdAt)}</td>
+      <td>
+        <div class="action-cell">
+          <button class="btn btn-sm btn-secondary" onclick="openUserModal('${u.id}')">View</button>
+          <button class="btn btn-sm btn-danger" onclick="banUser('${u.id}','${u.username}')">Ban</button>
+        </div>
+      </td>
+    </tr>`).join("");
+  }
+
+  async function openUserModal(uid) {
+    const snap = await db.collection("users").doc(uid).get();
+    const u    = snap.data();
+    document.getElementById("user-modal-body").innerHTML = `
+      <div style="display:grid;gap:10px;">
+        ${row("UID", uid, true)}
+        ${row("Username",  u.username)}
+        ${row("Email",     u.email)}
+        ${row("Balance",   `$${formatCurrency(u.walletBalance)}`)}
+        ${row("Plan",      u.activePlan || "None")}
+        ${row("Mining",    u.tradingActive?"Active":"Inactive")}
+        ${row("Trading Earnings",  `$${formatCurrency(u.tradingEarnings)}`)}
+        ${row("Referral Earnings", `$${formatCurrency(u.referralEarnings)}`)}
+        ${row("Referral Code", u.referralCode||"—")}
+        ${row("Joined",    formatDate(u.createdAt))}
+      </div>
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-sm btn-secondary" onclick="copyUID('${uid}')">Copy UID</button>
+        <button class="btn btn-sm btn-danger"    onclick="closeUserModal();banUser('${uid}','${u.username}')">Ban User</button>
+      </div>
+    `;
+    document.getElementById("user-modal").classList.add("open");
+  }
+
+  function row(label, val, mono=false) {
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface-2);border-radius:6px;">
+      <span style="font-size:.78rem;color:var(--text-2);">${label}</span>
+      <span style="${mono?'font-family:var(--font-mono);font-size:.72rem;':''} font-weight:500;">${val}</span>
+    </div>`;
+  }
+
+  function copyUID(uid) { navigator.clipboard.writeText(uid); showToast("UID copied!", "success"); }
+  function closeUserModal() { document.getElementById("user-modal").classList.remove("open"); }
+
+  async function banUser(uid, username) {
+    if (!confirm(`Ban user "${username}"? This disables their mining.`)) return;
+    await db.collection("users").doc(uid).update({ tradingActive:false, banned:true });
+    showToast(`User ${username} has been banned.`, "success");
+    loadUsers();
+  }
+
+  // ── DEPOSITS ─────────────────────────────────────────────
+
+  async function loadDeposits(status) {
+    let query = db.collection("deposits").orderBy("createdAt","desc");
+    if (status !== "all") query = query.where("status","==",status);
+    const snap = await query.limit(100).get();
+    const titles = { pending:"Pending Deposits", approved:"Approved Deposits", rejected:"Rejected Deposits", all:"All Deposits" };
+    setText("dep-table-title", titles[status]);
+    setText("dep-table-count", snap.size);
+
+    // Load usernames
+    const userIds   = [...new Set(snap.docs.map(d => d.data().userId))];
+    const userNames = {};
+    await Promise.all(userIds.map(async id => {
+      const u = await db.collection("users").doc(id).get();
+      userNames[id] = u.data()?.username || id.substring(0,8)+"…";
+    }));
+
+    const tbody = document.getElementById("deposits-tbody");
+    if (snap.empty) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-3);">No ${status} deposits</td></tr>`; return; }
+    tbody.innerHTML = snap.docs.map(d => {
+      const dep = d.data();
+      const actions = dep.status==="pending" ? `
+        <button class="btn btn-sm btn-success" onclick="approveDeposit('${d.id}','${dep.userId}',${dep.amount})">✓ Approve</button>
+        <button class="btn btn-sm btn-danger"  onclick="rejectDeposit('${d.id}','${dep.userId}',${dep.amount})">✕ Reject</button>
+      ` : `<span class="badge badge-${dep.status==='approved'?'approved':'rejected'}">${dep.status}</span>`;
+      return `<tr>
+        <td style="font-weight:500;">${userNames[dep.userId]||"—"}</td>
+        <td class="mono">$${formatCurrency(dep.amount)}</td>
+        <td>${dep.crypto}</td>
+        <td style="font-size:.75rem;color:var(--text-2);">${dep.network}</td>
+        <td style="font-size:.72rem;color:var(--text-3);">${formatDate(dep.createdAt)}</td>
+        <td><span class="badge badge-${dep.status==='approved'?'approved':dep.status==='rejected'?'rejected':'pending'}">${dep.status}</span></td>
+        <td><div class="action-cell">${actions}</div></td>
+      </tr>`;
+    }).join("");
+  }
+
+  async function approveDeposit(depId, userId, amount) {
+    if (!confirm(`Approve deposit of $${formatCurrency(amount)}?`)) return;
+    const batch = db.batch();
+    batch.update(db.collection("deposits").doc(depId), { status:"approved", approvedAt:firebase.firestore.FieldValue.serverTimestamp() });
+    batch.update(db.collection("users").doc(userId), { walletBalance:firebase.firestore.FieldValue.increment(amount) });
+    // Update transaction note
+    const txSnap = await db.collection("transactions").where("depositId","==",depId).limit(1).get();
+    if (!txSnap.empty) batch.update(txSnap.docs[0].ref, { note:"Deposit approved" });
+    await batch.commit();
+    showToast(`Deposit approved. $${formatCurrency(amount)} credited.`, "success");
+    loadDeposits("pending"); checkPendingCounts();
+  }
+
+  async function rejectDeposit(depId, userId, amount) {
+    if (!confirm("Reject this deposit?")) return;
+    await db.collection("deposits").doc(depId).update({ status:"rejected", rejectedAt:firebase.firestore.FieldValue.serverTimestamp() });
+    showToast("Deposit rejected.", "info");
+    loadDeposits("pending"); checkPendingCounts();
+  }
+
+  // ── WITHDRAWALS ───────────────────────────────────────────
+
+  async function loadWithdrawals(status) {
+    let query = db.collection("withdrawals").orderBy("createdAt","desc");
+    if (status !== "all") query = query.where("status","==",status);
+    const snap = await query.limit(100).get();
+    const titles = { pending:"Pending Withdrawals", approved:"Approved", paid:"Paid Withdrawals", rejected:"Rejected", all:"All Withdrawals" };
+    setText("wd-table-title", titles[status]);
+    setText("wd-table-count", snap.size);
+
+    const userIds   = [...new Set(snap.docs.map(d => d.data().userId))];
+    const userNames = {};
+    await Promise.all(userIds.map(async id => {
+      const u = await db.collection("users").doc(id).get();
+      userNames[id] = u.data()?.username || id.substring(0,8)+"…";
+    }));
+
+    const tbody = document.getElementById("withdrawals-tbody");
+    if (snap.empty) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-3);">No ${status} withdrawals</td></tr>`; return; }
+    tbody.innerHTML = snap.docs.map(d => {
+      const w = d.data();
+      let actions = "";
+      if (w.status === "pending") actions = `
+        <button class="btn btn-sm btn-success" onclick="approveWithdrawal('${d.id}')">✓ Approve</button>
+        <button class="btn btn-sm btn-danger"  onclick="rejectWithdrawal('${d.id}','${w.userId}',${w.amount})">✕ Reject</button>
+      `;
+      else if (w.status === "approved") actions = `
+        <button class="btn btn-sm btn-secondary" onclick="markWithdrawalPaid('${d.id}')">💳 Mark Paid</button>
+      `;
+      return `<tr>
+        <td style="font-weight:500;">${userNames[w.userId]||"—"}</td>
+        <td class="mono">$${formatCurrency(w.amount)}</td>
+        <td style="font-family:var(--font-mono);font-size:.7rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${w.walletAddress}</td>
+        <td style="font-size:.72rem;color:var(--text-3);">${formatDate(w.createdAt)}</td>
+        <td><span class="badge badge-${w.status==='paid'?'paid':w.status==='approved'?'approved':w.status==='rejected'?'rejected':'pending'}">${w.status}</span></td>
+        <td><div class="action-cell">${actions}</div></td>
+      </tr>`;
+    }).join("");
+  }
+
+  async function approveWithdrawal(wdId) {
+    if (!confirm("Approve this withdrawal request?")) return;
+    await db.collection("withdrawals").doc(wdId).update({ status:"approved", approvedAt:firebase.firestore.FieldValue.serverTimestamp() });
+    showToast("Withdrawal approved. Mark as paid once you send the funds.", "success");
+    loadWithdrawals("pending"); checkPendingCounts();
+  }
+
+  async function rejectWithdrawal(wdId, userId, amount) {
+    if (!confirm("Reject and refund this withdrawal?")) return;
+    const batch = db.batch();
+    batch.update(db.collection("withdrawals").doc(wdId), { status:"rejected" });
+    batch.update(db.collection("users").doc(userId),     { walletBalance:firebase.firestore.FieldValue.increment(amount) });
+    await batch.commit();
+    showToast("Withdrawal rejected. Balance refunded.", "info");
+    loadWithdrawals("pending"); checkPendingCounts();
+  }
+
+  async function markWithdrawalPaid(wdId) {
+    if (!confirm("Confirm you have sent the funds externally?")) return;
+    await db.collection("withdrawals").doc(wdId).update({ status:"paid", paidAt:firebase.firestore.FieldValue.serverTimestamp() });
+    const txSnap = await db.collection("transactions").where("userId","!=","").where("type","==","withdrawal").limit(1).get();
+    showToast("Withdrawal marked as paid.", "success");
+    loadWithdrawals("approved");
+  }
+
+  // ── ALL TRANSACTIONS ─────────────────────────────────────
+
+  async function loadAllTransactions() {
+    const snap = await db.collection("transactions").orderBy("createdAt","desc").limit(100).get();
+    const userNames = {};
+    const userIds   = [...new Set(snap.docs.map(d => d.data().userId))];
+    await Promise.all(userIds.map(async id => {
+      const u = await db.collection("users").doc(id).get();
+      userNames[id] = u.data()?.username || id.substring(0,8)+"…";
+    }));
+    setText("all-tx-count", `${snap.size} records`);
+    const tbody = document.getElementById("all-tx-tbody");
+    const typeLabels = { deposit:"Deposit", withdrawal:"Withdrawal", reward:"Mining Reward", referral_bonus:"Referral", plan_purchase:"Plan" };
+    if (snap.empty) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-3);">No transactions</td></tr>`; return; }
+    tbody.innerHTML = snap.docs.map(d => {
+      const t = d.data();
+      return `<tr>
+        <td style="font-weight:500;">${userNames[t.userId]||"—"}</td>
+        <td><span class="badge badge-approved">${typeLabels[t.type]||t.type}</span></td>
+        <td class="mono">$${formatCurrency(t.amount)}</td>
+        <td style="font-size:.78rem;color:var(--text-2);">${t.note||"—"}</td>
+        <td style="font-size:.72rem;color:var(--text-3);">${formatDate(t.createdAt)}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  // ── SETTINGS ─────────────────────────────────────────────
+
+  async function loadSettings() {
+    // Wallets
+    const wSnap = await db.collection("settings").doc("wallets").get();
+    const wallets = wSnap.exists ? wSnap.data() : {};
+    const walletFields = [
+      { key:"USDT_TRC20",       label:"USDT (TRC20)"           },
+      { key:"USDT_ERC20",       label:"USDT (ERC20)"           },
+      { key:"USDT_BEP20",       label:"USDT (BEP20)"           },
+      { key:"BTC_Bitcoin_Network",  label:"BTC (Bitcoin)"      },
+      { key:"ETH_ERC20",        label:"ETH (ERC20)"            },
+      { key:"SOL_Solana_Network",   label:"SOL (Solana)"       },
+      { key:"LTC_Litecoin_Network", label:"LTC (Litecoin)"     },
+      { key:"TON_TON_Network",  label:"TON"                    },
+    ];
+    document.getElementById("wallet-settings-form").innerHTML = walletFields.map(f => `
+      <div class="form-group">
+        <label class="form-label">${f.label}</label>
+        <input class="form-control" id="wallet_${f.key}" value="${wallets[f.key]||''}" placeholder="Wallet address…"/>
+      </div>
+    `).join("");
+
+    // Plans
+    const pSnap  = await db.collection("settings").doc("plans").get();
+    const plans  = pSnap.exists ? pSnap.data() : PLANS;
+    document.getElementById("plan-settings-form").innerHTML = Object.entries(PLANS).map(([key, def]) => {
+      const p = plans[key] || def;
+      return `<div class="form-group">
+        <label class="form-label">${key.charAt(0).toUpperCase()+key.slice(1)} Plan Cost ($)</label>
+        <input type="number" class="form-control" id="plan_cost_${key}" value="${p.cost}" min="1"/>
+      </div>`;
+    }).join("");
+  }
+
+  async function saveWallets() {
+    const walletFields = ["USDT_TRC20","USDT_ERC20","USDT_BEP20","BTC_Bitcoin_Network","ETH_ERC20","SOL_Solana_Network","LTC_Litecoin_Network","TON_TON_Network"];
+    const data = {};
+    walletFields.forEach(k => { data[k] = document.getElementById(`wallet_${k}`)?.value?.trim() || ""; });
+    await db.collection("settings").doc("wallets").set(data, { merge:true });
+    showToast("Wallet addresses saved!", "success");
+  }
+
+  async function savePlans() {
+    const data = {};
+    Object.keys(PLANS).forEach(key => {
+      const costEl = document.getElementById(`plan_cost_${key}`);
+      if (costEl) {
+        data[key] = { ...PLANS[key], cost: parseFloat(costEl.value) };
+      }
+    });
+    await db.collection("settings").doc("plans").set(data, { merge:true });
+    showToast("Plan costs updated!", "success");
+  }
+
+  async function saveRefRate() {
+    const rate = parseFloat(document.getElementById("ref-rate-input").value);
+    if (!rate || rate < 1) return showToast("Enter a valid rate.", "error");
+    await db.collection("settings").doc("referral").set({ commissionRate: rate/100 }, { merge:true });
+    showToast(`Referral rate set to ${rate}%.`, "success");
+  }
+
+  async function grantAdmin() {
+    const uid = document.getElementById("new-admin-uid").value.trim();
+    if (!uid) return showToast("Enter a UID.", "error");
+    await db.collection("admins").doc(uid).set({ grantedBy:currentAdminUser.uid, grantedAt:firebase.firestore.FieldValue.serverTimestamp() });
+    showToast("Admin access granted.", "success");
+    document.getElementById("new-admin-uid").value = "";
+  }
+
+  async function manualCredit() {
+    const uid    = document.getElementById("credit-uid").value.trim();
+    const amount = parseFloat(document.getElementById("credit-amount").value);
+    if (!uid || !amount) return showToast("Fill both fields.", "error");
+    if (!confirm(`Credit $${formatCurrency(amount)} to UID: ${uid}?`)) return;
+    const batch = db.batch();
+    batch.update(db.collection("users").doc(uid), { walletBalance:firebase.firestore.FieldValue.increment(amount) });
+    batch.set(db.collection("transactions").doc(), {
+      userId:amount, type:"deposit", amount,
+      note:"Manual admin credit",
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await batch.commit();
+    showToast(`$${formatCurrency(amount)} credited successfully.`, "success");
+    document.getElementById("credit-uid").value = document.getElementById("credit-amount").value = "";
+  }
+
+  // ── Helpers ───────────────────────────────────────────────
+  function setText(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+  function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); document.getElementById("sidebar-overlay").classList.toggle("open"); }
+  function closeSidebar()  { document.getElementById("sidebar").classList.remove("open");  document.getElementById("sidebar-overlay").classList.remove("open");  }
+  async function doSignOut() { await auth.signOut(); window.location.href = "../index.html"; }
+</script>
+<style>@media(max-width:700px){.ov-grid,.settings-grid{grid-template-columns:1fr !important;}}</style>
+</body>
+</html>

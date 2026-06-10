@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Trading — LITE HOUSE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    .chart-container{background:var(--surface-2);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;position:relative;overflow:hidden;}
+    .chart-canvas{width:100%;height:180px;display:block;}
+    .order-book{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:16px;}
+    .ob-col{background:var(--surface-2);padding:12px;}
+    .ob-title{font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+    .ob-row{display:flex;justify-content:space-between;font-size:.75rem;font-family:var(--font-mono);padding:3px 0;}
+    .ob-row.ask{color:var(--red);}
+    .ob-row.bid{color:var(--green);}
+    .ai-bot-banner{
+      background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(240,192,64,.08));
+      border:1px solid rgba(0,212,255,.25);
+      border-radius:var(--radius-md);
+      padding:20px 24px;
+      display:flex;
+      align-items:center;
+      gap:16px;
+      margin-bottom:24px;
+      flex-wrap:nowrap;
+      min-height:72px;
+    }
+    .ai-bot-banner .ai-text { flex:1; min-width:0; }
+    .ai-bot-banner .ai-title { font-weight:700; font-size:1rem; color:var(--text-1); margin-bottom:4px; white-space:nowrap; }
+    .ai-bot-banner .ai-desc  { font-size:.8rem; color:var(--text-2); line-height:1.5; }
+    .ai-bot-banner .ai-stat  { text-align:right; flex-shrink:0; }
+    .ai-bot-banner .ai-stat-label { font-size:.7rem; color:var(--text-3); margin-bottom:2px; }
+    .ai-bot-banner .ai-stat-val   { font-family:var(--font-mono); color:var(--green); font-size:1.2rem; font-weight:600; }
+    .ai-pulse{width:10px;height:10px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);animation:pulse 1.5s infinite;flex-shrink:0;}
+    .trade-result{border-radius:var(--radius-sm);padding:12px 16px;font-size:.85rem;margin-top:14px;display:none;}
+    .trade-result.win{background:var(--green-dim);border:1px solid rgba(0,229,160,.3);color:var(--green);}
+    .trade-result.loss{background:var(--red-dim);border:1px solid rgba(255,77,106,.3);color:var(--red);}
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <div class="page-body">
+
+      <!-- AI Banner -->
+      <div class="ai-bot-banner fade-in">
+        <div class="ai-pulse"></div>
+        <div class="ai-text">
+          <div class="ai-title">LITE HOUSE AI Trading Engine</div>
+          <div class="ai-desc">Autonomous AI bot analyzing market patterns and executing trades 24/7</div>
+        </div>
+        <div class="ai-stat">
+          <div class="ai-stat-label">Win Rate</div>
+          <div class="ai-stat-val">73.4%</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;" class="trade-grid">
+
+        <!-- Chart + Market -->
+        <div>
+          <!-- Pair selector -->
+          <div class="card" style="margin-bottom:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;" id="pair-tabs">
+                <!-- Injected -->
+              </div>
+              <div>
+                <span style="font-size:.7rem;color:var(--text-3);">24h Vol: </span>
+                <span class="mono" style="font-size:.85rem;color:var(--text-1);" id="vol-display">—</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Price display -->
+          <div class="card" style="margin-bottom:16px;">
+            <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+              <div>
+                <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;" id="chart-pair-label">BTC/USDT</div>
+                <div class="mono" style="font-size:2rem;font-weight:500;" id="current-price">—</div>
+              </div>
+              <div id="price-change-badge"></div>
+              <div style="margin-left:auto;display:flex;gap:20px;">
+                <div><div style="font-size:.7rem;color:var(--text-3);">24h High</div><div class="mono" style="color:var(--green);font-size:.9rem;" id="price-high">—</div></div>
+                <div><div style="font-size:.7rem;color:var(--text-3);">24h Low</div><div class="mono" style="color:var(--red);font-size:.9rem;" id="price-low">—</div></div>
+              </div>
+            </div>
+            <!-- Animated Chart -->
+            <div class="chart-container">
+              <canvas class="chart-canvas" id="price-chart"></canvas>
+              <div id="ai-trade-marker" style="position:absolute;display:none;"></div>
+            </div>
+          </div>
+
+          <!-- Order Book -->
+          <div class="card">
+            <div class="card-title" style="margin-bottom:14px;">Order Book</div>
+            <div class="order-book">
+              <div class="ob-col">
+                <div class="ob-title">Asks (Sell)</div>
+                <div id="asks-list"></div>
+              </div>
+              <div class="ob-col">
+                <div class="ob-title">Bids (Buy)</div>
+                <div id="bids-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trade Panel -->
+        <div>
+          <div class="trade-panel fade-in">
+            <div class="trade-tabs">
+              <button class="trade-tab buy active" onclick="setTradeTab('buy',this)">Buy</button>
+              <button class="trade-tab sell" onclick="setTradeTab('sell',this)">Sell</button>
+            </div>
+            <div class="trade-body">
+              <div class="form-group">
+                <label class="form-label">Amount (USD)</label>
+                <input type="number" class="form-control" id="trade-amount" placeholder="0.00" min="1"/>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-2);margin-bottom:16px;">
+                <span>Available</span>
+                <span class="mono" id="trade-balance">$0.00</span>
+              </div>
+              <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+                <button class="btn btn-sm btn-secondary" onclick="setPercent(25)">25%</button>
+                <button class="btn btn-sm btn-secondary" onclick="setPercent(50)">50%</button>
+                <button class="btn btn-sm btn-secondary" onclick="setPercent(75)">75%</button>
+                <button class="btn btn-sm btn-secondary" onclick="setPercent(100)">Max</button>
+              </div>
+              <button class="btn btn-primary w-full" id="trade-btn" onclick="executeTrade()">
+                Place AI Trade
+              </button>
+              <div class="trade-result" id="trade-result"></div>
+              <div style="margin-top:16px;padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);font-size:.75rem;color:var(--text-2);line-height:1.7;">
+                <div style="color:var(--gold);font-weight:600;margin-bottom:6px;">ℹ Simulation Mode</div>
+                This is an AI trading interface. Your mining plan generates actual daily rewards automatically.
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Trades -->
+          <div class="card" style="margin-top:16px;">
+            <div class="card-title" style="margin-bottom:14px;">AI Trade Log</div>
+            <div id="trade-log" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/rewards.js"></script>
+<script>
+  buildSidebar("trade");
+  buildTopbar("AI Trading");
+
+  let currentUser, userData, activePair = "BTC", tradeType = "buy";
+  let chartPrices = [], chartInterval, aiInterval;
+
+  const PAIRS = {
+    BTC:{ id:"bitcoin",       basePrice:67000, vol:"2.4B" },
+    ETH:{ id:"ethereum",      basePrice:3400,  vol:"1.1B" },
+    SOL:{ id:"solana",        basePrice:185,   vol:"420M" },
+    BNB:{ id:"binancecoin",   basePrice:580,   vol:"310M" },
+    LTC:{ id:"litecoin",      basePrice:82,    vol:"95M"  },
+    TRX:{ id:"tron",          basePrice:0.13,  vol:"780M" },
+  };
+
+  requireAuth(async (user, data) => {
+    currentUser = user; userData = data;
+    populateSidebarUser(data);
+    document.getElementById("trade-balance").textContent = `$${formatCurrency(data.walletBalance)}`;
+    buildPairTabs();
+    await loadPairData("BTC");
+    startChartSim();
+    startAIBot();
+  });
+
+  function buildPairTabs() {
+    document.getElementById("pair-tabs").innerHTML = Object.keys(PAIRS).map(sym =>
+      `<button class="btn btn-sm ${sym==='BTC'?'btn-primary':'btn-secondary'}" onclick="switchPair('${sym}',this)">${sym}/USDT</button>`
+    ).join("");
+  }
+
+  async function switchPair(sym, el) {
+    activePair = sym;
+    document.querySelectorAll("#pair-tabs button").forEach(b => b.className="btn btn-sm btn-secondary");
+    el.className = "btn btn-sm btn-primary";
+    await loadPairData(sym);
+  }
+
+  async function loadPairData(sym) {
+    const pair = PAIRS[sym];
+    document.getElementById("chart-pair-label").textContent = `${sym}/USDT`;
+    document.getElementById("vol-display").textContent      = pair.vol;
+    try {
+      const res  = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${pair.id}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_high_low_24h=true`);
+      const data = await res.json();
+      const coin = data[pair.id];
+      if (coin) {
+        const price  = coin.usd;
+        const change = coin.usd_24h_change || 0;
+        renderPriceDisplay(price, change, coin.usd_24h_high||price*1.02, coin.usd_24h_low||price*0.98);
+        pair.basePrice = price;
+        initChart(price);
+      }
+    } catch { initChart(pair.basePrice); }
+    renderOrderBook(PAIRS[sym].basePrice);
+  }
+
+  function renderPriceDisplay(price, change, high, low) {
+    const fmt = p => p >= 1 ? `$${p.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}` : `$${p.toFixed(6)}`;
+    document.getElementById("current-price").textContent = fmt(price);
+    document.getElementById("price-high").textContent    = fmt(high);
+    document.getElementById("price-low").textContent     = fmt(low);
+    const ch = document.getElementById("price-change-badge");
+    ch.innerHTML = `<span class="badge ${change>=0?'badge-approved':'badge-rejected'}" style="font-size:.85rem;">${change>=0?"▲":"▼"} ${Math.abs(change).toFixed(2)}%</span>`;
+  }
+
+  function initChart(basePrice) {
+    chartPrices = Array.from({length:60}, (_,i) => {
+      const noise = (Math.random() - 0.49) * basePrice * 0.003;
+      return basePrice + noise * (i+1);
+    });
+    drawChart();
+  }
+
+  function startChartSim() {
+    if (chartInterval) clearInterval(chartInterval);
+    chartInterval = setInterval(() => {
+      const last  = chartPrices[chartPrices.length-1];
+      const delta = (Math.random()-0.492) * last * 0.002;
+      chartPrices.push(last + delta);
+      chartPrices.shift();
+      const priceEl = document.getElementById("current-price");
+      if (priceEl) {
+        const fmt = last >= 1 ? last.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : last.toFixed(6);
+        priceEl.textContent = `$${fmt}`;
+      }
+      drawChart();
+      renderOrderBook(chartPrices[chartPrices.length-1]);
+    }, 1800);
+  }
+
+  function drawChart() {
+    const canvas = document.getElementById("price-chart");
+    if (!canvas) return;
+    const W = canvas.offsetWidth, H = 180;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0,0,W,H);
+
+    const min   = Math.min(...chartPrices);
+    const max   = Math.max(...chartPrices);
+    const range = max - min || 1;
+    const pts   = chartPrices.map((p,i) => [i*(W/(chartPrices.length-1)), H - ((p-min)/range)*(H-20)-10]);
+
+    // Grid lines
+    ctx.strokeStyle = "rgba(255,255,255,0.04)";
+    ctx.lineWidth = 1;
+    for (let y=0;y<H;y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+    // Area fill
+    const trend = chartPrices[chartPrices.length-1] >= chartPrices[0];
+    const grad  = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0, trend?"rgba(0,229,160,0.25)":"rgba(255,77,106,0.25)");
+    grad.addColorStop(1, "transparent");
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], H);
+    pts.forEach(([x,y]) => ctx.lineTo(x,y));
+    ctx.lineTo(pts[pts.length-1][0], H);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    pts.forEach(([x,y],i) => i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y));
+    ctx.strokeStyle = trend ? "#00E5A0" : "#FF4D6A";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  function renderOrderBook(basePrice) {
+    const asks = Array.from({length:6},(_,i) => ({
+      price: basePrice * (1 + (i+1)*0.0008 + Math.random()*0.0003),
+      qty:   (Math.random()*2+0.1).toFixed(4)
+    }));
+    const bids = Array.from({length:6},(_,i) => ({
+      price: basePrice * (1 - (i+1)*0.0008 - Math.random()*0.0003),
+      qty:   (Math.random()*2+0.1).toFixed(4)
+    }));
+    const fmt = p => p>=1 ? p.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : p.toFixed(6);
+    document.getElementById("asks-list").innerHTML = asks.map(r =>
+      `<div class="ob-row ask"><span>$${fmt(r.price)}</span><span>${r.qty}</span></div>`
+    ).join("");
+    document.getElementById("bids-list").innerHTML = bids.map(r =>
+      `<div class="ob-row bid"><span>$${fmt(r.price)}</span><span>${r.qty}</span></div>`
+    ).join("");
+  }
+
+  function setTradeTab(type, el) {
+    tradeType = type;
+    document.querySelectorAll(".trade-tab").forEach(t => t.classList.remove("active"));
+    el.classList.add("active");
+  }
+
+  function setPercent(pct) {
+    const bal = userData?.walletBalance || 0;
+    document.getElementById("trade-amount").value = ((bal * pct) / 100).toFixed(2);
+  }
+
+  function executeTrade() {
+    const amount = parseFloat(document.getElementById("trade-amount").value);
+    const resEl  = document.getElementById("trade-result");
+    if (!amount || amount <= 0) return showToast("Enter a valid amount.", "error");
+
+    const btn = document.getElementById("trade-btn");
+    setLoading(btn, true);
+
+    setTimeout(() => {
+      // Simulate AI trade — 73% win rate
+      const win     = Math.random() < 0.73;
+      const pct     = (Math.random()*1.5 + 0.3).toFixed(2);
+      const profit  = win ? (amount * pct / 100).toFixed(4) : -(amount * pct / 100).toFixed(4);
+      const label   = `${tradeType === 'buy' ? '📈 BUY' : '📉 SELL'} ${activePair}/USDT`;
+
+      resEl.style.display = "block";
+      resEl.className     = `trade-result ${win?"win":"loss"}`;
+      resEl.textContent   = win
+        ? `✓ AI Trade Profitable! +$${Math.abs(profit)} (${pct}% gain) — ${label}`
+        : `✗ AI Trade Closed: -$${Math.abs(profit)} (${pct}% loss) — ${label}`;
+
+      addTradeLog(label, win, pct, profit);
+      setLoading(btn, false, "Place AI Trade");
+      document.getElementById("trade-amount").value = "";
+    }, 1800);
+  }
+
+  function addTradeLog(label, win, pct, profit) {
+    const log = document.getElementById("trade-log");
+    const el  = document.createElement("div");
+    el.style.cssText = `display:flex;justify-content:space-between;padding:8px 10px;background:var(--surface-2);border-radius:6px;font-size:.75rem;`;
+    el.innerHTML = `
+      <span style="color:var(--text-2);">${new Date().toLocaleTimeString()}</span>
+      <span style="color:var(--text-1);">${label}</span>
+      <span style="color:${win?'var(--green)':'var(--red)'};">${win?'+':'-'}$${Math.abs(profit)}</span>
+    `;
+    log.insertBefore(el, log.firstChild);
+    if (log.children.length > 20) log.removeChild(log.lastChild);
+  }
+
+  function startAIBot() {
+    const symbols = Object.keys(PAIRS);
+    aiInterval = setInterval(() => {
+      const sym  = symbols[Math.floor(Math.random()*symbols.length)];
+      const win  = Math.random() < 0.73;
+      const pct  = (Math.random()*1.2+0.2).toFixed(2);
+      const amt  = (Math.random()*200+20).toFixed(2);
+      const profit = (amt * pct / 100).toFixed(4);
+      const label = `${Math.random()>0.5?'📈 BUY':'📉 SELL'} ${sym}/USDT`;
+      addTradeLog(label, win, pct, profit);
+    }, 4000);
+  }
+</script>
+<style>
+  @media(max-width:900px){ .trade-grid{ grid-template-columns:1fr !important; } }
+  .pair-btn { transition: all .2s; }
+  .pair-btn:hover { border-color: var(--gold) !important; color: var(--gold) !important; }
+</style>
+</body>
+</html>

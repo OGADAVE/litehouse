@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verify Email — LITE HOUSE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    .verify-icon { font-size:3.5rem; margin-bottom:20px; display:block; text-align:center; }
+    .verify-card { text-align:center; }
+    .verify-card h2 { margin-bottom:10px; }
+    .verify-card p  { color:var(--text-2); font-size:.9rem; margin-bottom:24px; }
+    .email-highlight { color:var(--gold); font-weight:600; }
+    .btn-row { display:flex; flex-direction:column; gap:12px; }
+  </style>
+</head>
+<body class="auth-body">
+<div class="auth-card fade-in verify-card">
+  <div style="text-align:center;">
+    <img src="../assets/logo.png" alt="LITE HOUSE" style="width:160px;height:auto;object-fit:contain;filter:drop-shadow(0 0 16px rgba(240,192,64,0.3));margin-bottom:8px;"/>
+  </div>
+  <span class="verify-icon">📧</span>
+  <h2>Verify Your Email</h2>
+  <p>A verification link has been sent to<br/><span class="email-highlight" id="user-email">your email address</span>.<br/>Click the link to activate your account.</p>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="check-btn" onclick="checkVerification()">I've Verified — Continue</button>
+    <button class="btn btn-secondary" id="resend-btn" onclick="resendEmail()">Resend Verification Email</button>
+    <button class="btn btn-secondary" onclick="doSignOut()">Back to Login</button>
+  </div>
+  <p style="margin-top:20px;font-size:.78rem;color:var(--text-3);">Check spam folder if not received. Link expires in 24h.</p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script>
+  auth.onAuthStateChanged(user => {
+    if (!user) { window.location.href = "../index.html"; return; }
+    if (user.emailVerified) { window.location.href = "dashboard.html"; return; }
+    document.getElementById("user-email").textContent = user.email;
+  });
+
+  async function checkVerification() {
+    const btn = document.getElementById("check-btn");
+    setLoading(btn, true);
+    await auth.currentUser.reload();
+    if (auth.currentUser.emailVerified) {
+      showToast("Email verified! Redirecting…", "success");
+      setTimeout(() => window.location.href = "dashboard.html", 1000);
+    } else {
+      showToast("Not verified yet. Please check your inbox.", "error");
+      setLoading(btn, false, "I've Verified — Continue");
+    }
+  }
+
+  async function resendEmail() {
+    const btn = document.getElementById("resend-btn");
+    setLoading(btn, true);
+    try {
+      await auth.currentUser.sendEmailVerification();
+      showToast("Verification email resent!", "success");
+    } catch(e) {
+      showToast("Too many requests. Wait a moment.", "error");
+    } finally {
+      setLoading(btn, false, "Resend Verification Email");
+    }
+  }
+
+  async function doSignOut() {
+    await auth.signOut();
+    window.location.href = "../index.html";
+  }
+</script>
+</body>
+</html>

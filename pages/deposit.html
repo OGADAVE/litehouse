@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Deposit — LITE HOUSE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <div class="page-body">
+
+      <div class="card" style="max-width:580px;margin:0 auto;">
+        <!-- Step Indicator -->
+        <div class="step-indicator" id="step-indicator">
+          <div class="step active" id="step1"><div class="step-num">1</div>Select Asset</div>
+          <div class="step-line"></div>
+          <div class="step" id="step2"><div class="step-num">2</div>Send Funds</div>
+          <div class="step-line"></div>
+          <div class="step" id="step3"><div class="step-num">3</div>Confirm</div>
+        </div>
+
+        <!-- STEP 1: Select -->
+        <div id="pane-1">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Make a Deposit</div>
+              <div class="card-subtitle">Select cryptocurrency and enter amount</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cryptocurrency</label>
+            <select class="form-control" id="dep-crypto" onchange="updateNetwork()">
+              <option value="USDT">USDT — Tether</option>
+              <option value="BTC">BTC — Bitcoin</option>
+              <option value="ETH">ETH — Ethereum</option>
+              <option value="SOL">SOL — Solana</option>
+              <option value="LTC">LTC — Litecoin</option>
+              <option value="TON">TON — The Open Network</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Network</label>
+            <select class="form-control" id="dep-network">
+              <option value="TRC20">TRC20 (TRON)</option>
+              <option value="ERC20">ERC20 (Ethereum)</option>
+              <option value="BEP20">BEP20 (BSC)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Amount (USD equivalent)</label>
+            <input type="number" class="form-control" id="dep-amount" placeholder="Min. $5.00" min="5"/>
+            <div class="form-hint">Minimum deposit: $5.00</div>
+          </div>
+          <button class="btn btn-primary" onclick="goToStep2()">Continue →</button>
+        </div>
+
+        <!-- STEP 2: Send -->
+        <div id="pane-2" style="display:none;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Send Your Funds</div>
+              <div class="card-subtitle" id="send-subtitle">Send exactly the amount to the address below</div>
+            </div>
+          </div>
+          <div style="background:var(--gold-glow);border:1px solid rgba(240,192,64,.25);border-radius:var(--radius-sm);padding:14px 18px;margin-bottom:20px;text-align:center;">
+            <div style="font-size:.72rem;color:var(--text-2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Amount to Send</div>
+            <div class="mono" style="font-size:1.8rem;font-weight:500;color:var(--gold);" id="send-amount-display">—</div>
+            <div style="font-size:.78rem;color:var(--text-2);margin-top:4px;" id="send-network-label">—</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Wallet Address</label>
+            <div class="address-box">
+              <div class="address-text" id="wallet-address">Loading…</div>
+              <button class="btn btn-sm btn-secondary" onclick="copyAddress()">Copy</button>
+            </div>
+            <div class="form-hint">Only send <span id="addr-crypto">—</span> on <span id="addr-network">—</span> network to this address.</div>
+          </div>
+          <div style="background:var(--red-dim);border:1px solid rgba(255,77,106,.25);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:20px;font-size:.82rem;color:var(--red);">
+            ⚠ &nbsp;Sending wrong coin or network will result in permanent loss of funds.
+          </div>
+          <button class="btn btn-primary" onclick="goToStep3()">I Have Sent the Funds →</button>
+          <button class="btn btn-secondary w-full" style="margin-top:10px;" onclick="goToStep1()">← Back</button>
+        </div>
+
+        <!-- STEP 3: Confirm -->
+        <div id="pane-3" style="display:none;text-align:center;">
+          <div style="font-size:3rem;margin-bottom:16px;">⏳</div>
+          <h2 style="margin-bottom:10px;">Deposit Submitted</h2>
+          <p style="color:var(--text-2);font-size:.9rem;margin-bottom:24px;">Your deposit request has been submitted and is pending admin review. You'll receive your funds once approved (usually within 1–24 hours).</p>
+          <div style="background:var(--surface-2);border-radius:var(--radius-md);padding:20px;text-align:left;margin-bottom:24px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+              <span style="font-size:.82rem;color:var(--text-2);">Amount</span>
+              <span class="mono" id="confirm-amount">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+              <span style="font-size:.82rem;color:var(--text-2);">Crypto</span>
+              <span class="mono" id="confirm-crypto">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;">
+              <span style="font-size:.82rem;color:var(--text-2);">Status</span>
+              <span class="badge badge-pending">Pending Review</span>
+            </div>
+          </div>
+          <a href="dashboard.html" class="btn btn-primary">Back to Dashboard</a>
+          <button class="btn btn-secondary w-full" style="margin-top:10px;" onclick="resetForm()">Make Another Deposit</button>
+        </div>
+      </div>
+
+      <!-- Past Deposits -->
+      <div class="card" style="max-width:580px;margin:24px auto 0;">
+        <div class="card-header">
+          <div class="card-title">Deposit History</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Amount</th><th>Crypto</th><th>Network</th><th>Status</th><th>Date</th></tr>
+            </thead>
+            <tbody id="dep-history"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/rewards.js"></script>
+<script>
+  buildSidebar("deposit");
+  buildTopbar("Deposit Funds");
+
+  let currentUser, depData = {};
+
+  const CRYPTO_NETWORKS = {
+    USDT: ["TRC20","ERC20","BEP20"],
+    BTC:  ["Bitcoin Network"],
+    ETH:  ["ERC20"],
+    SOL:  ["Solana Network"],
+    LTC:  ["Litecoin Network"],
+    TON:  ["TON Network"]
+  };
+
+  requireAuth(async (user, userData) => {
+    currentUser = user;
+    populateSidebarUser(userData);
+    loadDepositHistory(user.uid);
+  });
+
+  function updateNetwork() {
+    const crypto  = document.getElementById("dep-crypto").value;
+    const netSel  = document.getElementById("dep-network");
+    const networks = CRYPTO_NETWORKS[crypto] || ["Main Network"];
+    netSel.innerHTML = networks.map(n => `<option value="${n}">${n}</option>`).join("");
+  }
+
+  async function getWalletAddress(crypto, network) {
+    try {
+      const snap = await db.collection("settings").doc("wallets").get();
+      const wallets = snap.exists ? snap.data() : {};
+      const key = `${crypto}_${network}`.replace(/\s/g,"_");
+      return wallets[key] || wallets[crypto] || "TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE"; // fallback demo
+    } catch {
+      return "TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE";
+    }
+  }
+
+  async function goToStep2() {
+    const crypto  = document.getElementById("dep-crypto").value;
+    const network = document.getElementById("dep-network").value;
+    const amount  = parseFloat(document.getElementById("dep-amount").value);
+
+    if (!amount || amount < 5) return showToast("Minimum deposit is $5.", "error");
+
+    const address = await getWalletAddress(crypto, network);
+    depData = { crypto, network, amount, address };
+
+    document.getElementById("send-amount-display").textContent = `$${formatCurrency(amount)} ${crypto}`;
+    document.getElementById("send-subtitle").textContent       = `Send exactly $${formatCurrency(amount)} worth of ${crypto}`;
+    document.getElementById("send-network-label").textContent  = `Network: ${network}`;
+    document.getElementById("wallet-address").textContent      = address;
+    document.getElementById("addr-crypto").textContent         = crypto;
+    document.getElementById("addr-network").textContent        = network;
+
+    switchPane(2);
+  }
+
+  async function goToStep3() {
+    const btn = event?.target;
+    if (btn) setLoading(btn, true);
+    try {
+      const ref = await db.collection("deposits").add({
+        userId:        currentUser.uid,
+        amount:        depData.amount,
+        crypto:        depData.crypto,
+        network:       depData.network,
+        walletAddress: depData.address,
+        status:        "pending",
+        createdAt:     firebase.firestore.FieldValue.serverTimestamp()
+      });
+      // Transaction log
+      await db.collection("transactions").add({
+        userId:    currentUser.uid,
+        type:      "deposit",
+        amount:    depData.amount,
+        depositId: ref.id,
+        note:      `${depData.crypto} deposit — pending review`,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      document.getElementById("confirm-amount").textContent = `$${formatCurrency(depData.amount)}`;
+      document.getElementById("confirm-crypto").textContent = `${depData.crypto} (${depData.network})`;
+      switchPane(3);
+    } catch(e) {
+      showToast("Failed to submit deposit. Try again.", "error");
+    } finally {
+      if (btn) setLoading(btn, false, "I Have Sent the Funds →");
+    }
+  }
+
+  function goToStep1() { switchPane(1); }
+
+  function switchPane(n) {
+    [1,2,3].forEach(i => {
+      document.getElementById(`pane-${i}`).style.display = i===n ? "block" : "none";
+      const stepEl = document.getElementById(`step${i}`);
+      stepEl.className = `step ${i<n?"done":i===n?"active":""}`;
+    });
+  }
+
+  function copyAddress() {
+    const addr = document.getElementById("wallet-address").textContent;
+    navigator.clipboard.writeText(addr);
+    showToast("Address copied!", "success");
+  }
+
+  function resetForm() {
+    document.getElementById("dep-amount").value = "";
+    switchPane(1);
+    updateNetwork();
+  }
+
+  async function loadDepositHistory(uid) {
+    const snap = await db.collection("deposits")
+      .where("userId","==",uid)
+      .orderBy("createdAt","desc")
+      .limit(10).get();
+    const tbody = document.getElementById("dep-history");
+    if (snap.empty) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">📭</div><h3>No deposits yet</h3></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = snap.docs.map(d => {
+      const dep = d.data();
+      return `<tr>
+        <td class="mono">$${formatCurrency(dep.amount)}</td>
+        <td>${dep.crypto}</td>
+        <td style="font-size:.78rem;color:var(--text-2);">${dep.network}</td>
+        <td><span class="badge badge-${dep.status==='approved'?'approved':dep.status==='rejected'?'rejected':'pending'}">${dep.status}</span></td>
+        <td style="font-size:.78rem;color:var(--text-3);">${formatDate(dep.createdAt)}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  updateNetwork();
+</script>
+</body>
+</html>

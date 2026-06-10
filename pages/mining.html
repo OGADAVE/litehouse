@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mining Plans — LITE HOUSE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    .current-plan-banner{
+      background:var(--gold-glow);border:1px solid rgba(240,192,64,0.25);
+      border-radius:var(--radius-md);padding:16px 20px;margin-bottom:24px;
+      display:flex;align-items:center;gap:12px;
+    }
+    .plan-card-wrap { position:relative; }
+    .plan-badge-popular {
+      position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+      background:var(--gold);color:var(--obsidian);font-size:.65rem;
+      font-weight:800;padding:3px 12px;border-radius:10px;white-space:nowrap;
+      letter-spacing:.05em;
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <div class="page-body">
+
+      <div class="current-plan-banner" id="current-plan-banner">
+        <span style="font-size:1.3rem;">⛏</span>
+        <div>
+          <div style="font-weight:600;font-size:.9rem;" id="banner-plan">Loading current plan…</div>
+          <div style="font-size:.78rem;color:var(--text-2);" id="banner-detail"></div>
+        </div>
+        <div style="margin-left:auto;" id="banner-badge"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Choose a Mining Plan</div>
+            <div class="card-subtitle">Activate a plan to start earning daily AI trading rewards</div>
+          </div>
+        </div>
+
+        <div class="plans-grid" id="plans-grid">
+          <!-- Plans injected by JS -->
+        </div>
+      </div>
+
+      <!-- Active mining detail -->
+      <div class="card" id="active-detail" style="display:none;">
+        <div class="card-header">
+          <div class="card-title">Current Mining Activity</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;">
+          <div>
+            <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Plan</div>
+            <div class="mono" id="detail-plan" style="font-size:1rem;color:var(--gold);">—</div>
+          </div>
+          <div>
+            <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Daily Reward</div>
+            <div class="mono" id="detail-daily" style="font-size:1rem;color:var(--green);">—</div>
+          </div>
+          <div>
+            <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Total ROI</div>
+            <div class="mono" id="detail-roi" style="font-size:1rem;">—</div>
+          </div>
+          <div>
+            <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Expires</div>
+            <div class="mono" id="detail-expires" style="font-size:.9rem;">—</div>
+          </div>
+        </div>
+        <div style="margin-top:20px;">
+          <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-2);margin-bottom:8px;">
+            <span>Plan Progress</span>
+            <span id="detail-progress-pct">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="detail-progress-fill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Activate Plan</h3>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal()">✕</button>
+    </div>
+    <p style="color:var(--text-2);font-size:.875rem;margin-bottom:20px;">You are about to activate the <strong id="modal-plan-name" style="color:var(--gold);">—</strong> plan.</p>
+    <div style="background:var(--surface-2);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:.82rem;color:var(--text-2);">Plan Cost</span>
+        <span class="mono" id="modal-cost">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:.82rem;color:var(--text-2);">Current Balance</span>
+        <span class="mono" id="modal-balance">—</span>
+      </div>
+      <div style="height:1px;background:var(--border);margin:10px 0;"></div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="font-size:.82rem;color:var(--text-2);">Balance After</span>
+        <span class="mono" id="modal-after" style="color:var(--gold);">—</span>
+      </div>
+    </div>
+    <div id="modal-warning" style="display:none;background:var(--red-dim);border:1px solid rgba(255,77,106,.3);border-radius:var(--radius-sm);padding:12px;font-size:.82rem;color:var(--red);margin-bottom:16px;">
+      ⚠ Insufficient balance to activate this plan.
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-secondary" style="flex:1;" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" style="flex:1;" id="confirm-btn" onclick="confirmActivate()">Activate Now</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/rewards.js"></script>
+    <script src="../js/milestones.js"></script>
+<script>
+  buildSidebar("mining");
+  buildTopbar("Mining Plans");
+
+  let currentUser, currentData, selectedPlanKey;
+
+  const planMeta = {
+    free:      { color:"var(--text-3)", emoji:"🌱" },
+    basic:     { color:"var(--cyan)",   emoji:"⚡"  },
+    executive: { color:"var(--gold)",   emoji:"🏆"  },
+    premium:   { color:"#BF7FFF",       emoji:"💎"  }
+  };
+
+  requireAuth(async (user, userData) => {
+    currentUser = user;
+    currentData = userData;
+    populateSidebarUser(userData);
+    renderPlans(userData);
+    renderBanner(userData);
+    if (userData.tradingActive) renderActiveDetail(userData);
+  });
+
+  function renderBanner(d) {
+    const el   = document.getElementById("banner-plan");
+    const det  = document.getElementById("banner-detail");
+    const bdg  = document.getElementById("banner-badge");
+    if (d.activePlan && d.tradingActive) {
+      const plan = PLANS[d.activePlan];
+      const daily = ((plan.cost * plan.roiPercent/100)/plan.durationDays).toFixed(4);
+      el.textContent  = `Active: ${d.activePlan.charAt(0).toUpperCase()+d.activePlan.slice(1)} Plan`;
+      det.textContent = `Daily reward: $${daily} · Balance: $${formatCurrency(d.walletBalance)}`;
+      bdg.innerHTML   = `<span class="badge badge-active">Mining</span>`;
+    } else {
+      el.textContent  = "No active plan";
+      det.textContent = `Balance: $${formatCurrency(d.walletBalance)} — Select a plan below to start earning`;
+      bdg.innerHTML   = `<span class="badge badge-rejected">Inactive</span>`;
+    }
+  }
+
+  function renderPlans(d) {
+    const grid = document.getElementById("plans-grid");
+    grid.innerHTML = Object.entries(PLANS).map(([key, plan]) => {
+      const isCurrent  = d.activePlan === key && d.tradingActive;
+      const totalROI   = (plan.cost * plan.roiPercent / 100);
+      const dailyRwd   = (totalROI / plan.durationDays).toFixed(4);
+      const meta       = planMeta[key];
+      const isPopular  = key === "executive";
+      return `
+        <div class="plan-card-wrap">
+          ${isPopular ? '<div class="plan-badge-popular">MOST POPULAR</div>' : ''}
+          <div class="plan-card plan-${key} ${isCurrent?'selected':''}" onclick="selectPlan('${key}')">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <div class="plan-name">${meta.emoji} ${plan.name}</div>
+                <div style="font-size:.78rem;color:var(--text-2);margin-top:2px;">${plan.durationDays}-day plan</div>
+              </div>
+              ${isCurrent ? '<span class="badge badge-active">Active</span>' : ''}
+            </div>
+            <div class="plan-cost">$${plan.cost}</div>
+            <div class="plan-roi">+${plan.roiPercent}% ROI over 30 days</div>
+            <div style="height:1px;background:var(--border);"></div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div class="plan-feature">Daily: $${dailyRwd}</div>
+              <div class="plan-feature">Total: $${(plan.cost + totalROI - plan.cost).toFixed(2)} profit</div>
+              <div class="plan-feature">Payout: $${(plan.cost + totalROI).toFixed(2)}</div>
+              <div class="plan-feature">${plan.withdrawEnabled ? 'Withdrawals enabled' : 'Withdrawals locked'}</div>
+            </div>
+            <button class="btn ${isCurrent?'btn-success':'btn-primary'} w-full" style="font-size:.83rem;"
+              onclick="event.stopPropagation();selectPlan('${key}')">
+              ${isCurrent ? '✓ Currently Active' : key==='free' ? 'Already Claimed' : 'Activate Plan'}
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderActiveDetail(d) {
+    document.getElementById("active-detail").style.display = "block";
+    const plan    = PLANS[d.activePlan];
+    const daily   = ((plan.cost * plan.roiPercent/100)/plan.durationDays).toFixed(4);
+    const expiry  = d.planEndDate?.toDate ? d.planEndDate.toDate() : new Date(d.planEndDate);
+    const progress = getPlanProgress(d.tradingStartTime, plan.durationDays);
+    document.getElementById("detail-plan").textContent    = d.activePlan.charAt(0).toUpperCase()+d.activePlan.slice(1);
+    document.getElementById("detail-daily").textContent   = `$${daily}`;
+    document.getElementById("detail-roi").textContent     = `${plan.roiPercent}%`;
+    document.getElementById("detail-expires").textContent = expiry.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+    document.getElementById("detail-progress-pct").textContent = `${progress}%`;
+    document.getElementById("detail-progress-fill").style.width = `${progress}%`;
+  }
+
+  function selectPlan(key) {
+    if (key === "free") return showToast("Free plan is automatically assigned at registration.", "info");
+    if (currentData.activePlan === key && currentData.tradingActive)
+      return showToast("This plan is already active.", "info");
+
+    selectedPlanKey = key;
+    const plan = PLANS[key];
+    const after = currentData.walletBalance - plan.cost;
+
+    document.getElementById("modal-plan-name").textContent = plan.name;
+    document.getElementById("modal-cost").textContent      = `$${plan.cost}`;
+    document.getElementById("modal-balance").textContent   = `$${formatCurrency(currentData.walletBalance)}`;
+    document.getElementById("modal-after").textContent     = `$${formatCurrency(after)}`;
+
+    const insufficient = currentData.walletBalance < plan.cost;
+    document.getElementById("modal-warning").style.display   = insufficient ? "block" : "none";
+    document.getElementById("confirm-btn").disabled          = insufficient;
+
+    document.getElementById("confirm-modal").classList.add("open");
+  }
+
+  async function confirmActivate() {
+    const btn  = document.getElementById("confirm-btn");
+    const plan = PLANS[selectedPlanKey];
+    setLoading(btn, true);
+    try {
+      const batch = db.batch();
+      const uRef  = db.collection("users").doc(currentUser.uid);
+      batch.update(uRef, {
+        walletBalance:    firebase.firestore.FieldValue.increment(-plan.cost),
+        activePlan:       selectedPlanKey,
+        tradingActive:    true,
+        tradingStartTime: firebase.firestore.FieldValue.serverTimestamp(),
+        lastRewardTime:   firebase.firestore.FieldValue.serverTimestamp(),
+        planEndDate:      new Date(Date.now() + plan.durationDays*24*60*60*1000)
+      });
+      const txRef = db.collection("transactions").doc();
+      batch.set(txRef, {
+        userId:    currentUser.uid,
+        type:      "plan_purchase",
+        amount:    plan.cost,
+        plan:      selectedPlanKey,
+        note:      `Activated ${plan.name} plan`,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await batch.commit();
+      showToast(plan.name + " plan activated! Mining starts now.", "success");
+      closeModal();
+
+      // Check if referrer hit a milestone (non-blocking)
+      if (currentData.referredBy) {
+        checkMilestones(currentData.referredBy).then(function (result) {
+          if (result && result.bonusEarned > 0) {
+            console.log("Referrer earned milestone bonus:", result.bonusEarned);
+          }
+        });
+      }
+
+      setTimeout(function () { window.location.reload(); }, 1200);
+    } catch(e) {
+      showToast("Activation failed. Please try again.", "error");
+    } finally {
+      setLoading(btn, false, "Activate Now");
+    }
+  }
+
+  function closeModal() { document.getElementById("confirm-modal").classList.remove("open"); }
+</script>
+</body>
+</html>
