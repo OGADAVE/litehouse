@@ -286,43 +286,6 @@
       color: var(--text-2);
     }
 
-    /* ── Floating WhatsApp button (all pages) ─────────────── */
-    .wa-float {
-      position: fixed;
-      bottom: 28px;
-      right: 28px;
-      width: 56px; height: 56px;
-      border-radius: 50%;
-      background: #25D366;
-      display: grid; place-items: center;
-      font-size: 28px;
-      box-shadow: 0 4px 20px rgba(37,211,102,0.5);
-      cursor: pointer;
-      text-decoration: none;
-      z-index: 999;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .wa-float:hover {
-      transform: scale(1.1);
-      box-shadow: 0 6px 28px rgba(37,211,102,0.65);
-    }
-    .wa-float-tooltip {
-      position: absolute;
-      right: 68px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 14px;
-      font-size: 0.8rem;
-      color: var(--text-1);
-      white-space: nowrap;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-      box-shadow: var(--shadow-card);
-    }
-    .wa-float:hover .wa-float-tooltip { opacity: 1; }
-
     @media(max-width: 680px) {
       .contact-grid { grid-template-columns: 1fr; }
       .help-banner  { flex-direction: column; }
@@ -346,7 +309,7 @@
         <!-- WhatsApp (PRIMARY) -->
         <!-- ⚠ REPLACE: Change YOUR_WHATSAPP_NUMBER to your number with country code, no + or spaces -->
         <!-- Example: 2348012345678 for a Nigerian number -->
-        <a class="contact-card whatsapp" href="https://wa.me/YOUR_WHATSAPP_NUMBER?text=Hello%20LITE%20HOUSE%20Support%2C%20I%20need%20help%20with..." target="_blank">
+        <a class="contact-card whatsapp" href="https://wa.me/+2349029870266?text=Hello%20LITE%20HOUSE%20Support%2C%20I%20need%20help%20with..." target="_blank">
           <div class="primary-badge">Primary</div>
           <div class="cc-icon">💬</div>
           <div>
@@ -366,7 +329,7 @@
         <!-- Telegram -->
         <!-- ⚠ REPLACE: Change YOUR_TELEGRAM_USERNAME to your Telegram channel/group username -->
         <!-- Example: litehouse_official -->
-        <a class="contact-card telegram" href="https://t.me/YOUR_TELEGRAM_USERNAME" target="_blank">
+        <a class="contact-card telegram" href="https://t.me/litehouse_official" target="_blank">
           <div class="cc-icon">✈️</div>
           <div>
             <div class="cc-label">Community &amp; Announcements</div>
@@ -417,7 +380,7 @@
                 <span class="faq-chevron">▼</span>
               </button>
               <div class="faq-answer"><div class="faq-answer-inner">
-                Once you submit your deposit request, our admin team manually reviews and approves it — typically within <strong>1 to 24 hours</strong>. You will see the status update from <span class="tag">pending</span> to <span class="tag">approved</span> in your Deposit History, and your wallet balance will be credited instantly on approval.
+                Once you submit your deposit request, it reflects typically within <strong>1 to 30 minutes</strong>. You will see the status update from <span class="tag">pending</span> to <span class="tag">approved</span> in your Deposit History, and your wallet balance will be credited instantly on approval.
               </div></div>
             </div>
 
@@ -455,7 +418,7 @@
                 <span class="faq-chevron">▼</span>
               </button>
               <div class="faq-answer"><div class="faq-answer-inner">
-                Go to <strong>Withdraw</strong> in the sidebar. Enter the amount you want to withdraw and your <strong>Litecoin (LTC) wallet address</strong>. Submit the request — admin will review, approve, and send the LTC to your address within 24–48 hours. All withdrawals are paid exclusively in LTC.
+                Go to <strong>Withdraw</strong> in the sidebar or menubar. Enter the amount you want to withdraw and your <strong>Litecoin (LTC) wallet address</strong>. Submit the request. LTC will be sent to your address within 1 - 30 minutes. All withdrawals are paid exclusively in LTC.
               </div></div>
             </div>
 
@@ -465,7 +428,7 @@
                 <span class="faq-chevron">▼</span>
               </button>
               <div class="faq-answer"><div class="faq-answer-inner">
-                The Free plan is a starter plan gifted to every new member worth <strong>$5</strong>. Withdrawals are disabled on this plan to encourage reinvestment. To unlock withdrawals, upgrade to the <strong>Basic ($20), Executive ($50), Premium ($100), Elite ($500), or Prestige ($1000)</strong> plan using your earned balance or a fresh deposit.
+                The Free plan is a starter plan gifted to every new member worth <strong>$5</strong>. Withdrawals are disabled on this plan to encourage active participation. To unlock withdrawals, upgrade to the <strong>Basic ($20), Executive ($50), Premium ($100), Elite ($500), or Prestige ($1000)</strong> plan using your earned balance or a fresh deposit.
               </div></div>
             </div>
 
@@ -475,7 +438,7 @@
                 <span class="faq-chevron">▼</span>
               </button>
               <div class="faq-answer"><div class="faq-answer-inner">
-                The minimum withdrawal is <strong>$1.00 USD</strong> equivalent in LTC. Withdrawal requests below this amount will not be processed.
+                The minimum withdrawal is <strong>$5.00 USD</strong> equivalent in LTC. Withdrawal requests below this amount will not be processed.
               </div></div>
             </div>
 
@@ -485,7 +448,7 @@
                 <span class="faq-chevron">▼</span>
               </button>
               <div class="faq-answer"><div class="faq-answer-inner">
-                Withdrawals are processed within <strong>24–48 hours</strong>. If yours has been pending longer than 48 hours, please contact support on WhatsApp with your <strong>username and withdrawal amount</strong> and we'll resolve it promptly.
+                Withdrawals are processed within <strong>1 - 30 minutes</strong>. If yours has been pending longer than 30 minutes, please contact support with your <strong>username and withdrawal amount</strong> and we'll resolve it promptly.
               </div></div>
             </div>
           </div>
@@ -530,7 +493,7 @@
                 <span class="faq-chevron">▼</span>
               </button>
               <div class="faq-answer"><div class="faq-answer-inner">
-                Once your 30-day plan expires, mining stops automatically and your balance retains all earned rewards. You can then activate a new plan using your available wallet balance or make a fresh deposit to continue earning.
+                Once your 30-day plan expires, AI stops trading and mining stops automatically and your balance retains all earned rewards. You can then activate a new plan using your available wallet balance or make a fresh deposit to continue earning.
               </div></div>
             </div>
           </div>
@@ -558,7 +521,7 @@
                 <span class="faq-chevron">▼</span>
               </button>
               <div class="faq-answer"><div class="faq-answer-inner">
-                Share your unique referral code with anyone. When they register using your code and activate a mining plan, you earn <strong>10% of every daily reward</strong> they receive — automatically, every 24 hours, for the full duration of their plan. This stacks with your own mining rewards with no cap.
+                Share your unique referral code with anyone. When they register using your code and activate a mining plan, you earn <strong>10% of their activated plan</strong> — automatically. For example, if they activate the $100 Premium plan, you get $10 credited to your wallet instantly. You can track all your referrals and commissions on the <strong>Referral</strong> page in the sidebar.
               </div></div>
             </div>
 
@@ -595,22 +558,14 @@
           <h3>Still need help?</h3>
           <p>Our support team is ready to assist you. Reach out on WhatsApp for the fastest response.</p>
         </div>
-        <!-- ⚠ REPLACE: Same WhatsApp number as above -->
-        <a href="https://wa.me/YOUR_WHATSAPP_NUMBER?text=Hello%20LITE%20HOUSE%20Support%2C%20I%20need%20help%20with..." target="_blank" class="btn btn-primary" style="width:auto;white-space:nowrap;background:linear-gradient(135deg,#25D366,#1aad52);box-shadow:0 4px 16px rgba(37,211,102,0.3);">
+        <a href="https://wa.me/+2349029870266?text=Hello%20LITE%20HOUSE%20Support%2C%20I%20need%20help%20with..." target="_blank" class="btn btn-primary" style="width:auto;white-space:nowrap;background:linear-gradient(135deg,#25D366,#1aad52);box-shadow:0 4px 16px rgba(37,211,102,0.3);">
           💬 &nbsp;Chat With Us
         </a>
       </div>
 
-    </div><!-- /page-body -->
-  </div><!-- /main-content -->
+    </div>
+  </div>
 </div>
-
-<!-- Floating WhatsApp Button -->
-<!-- ⚠ REPLACE: Same WhatsApp number -->
-<a class="wa-float" href="https://wa.me/YOUR_WHATSAPP_NUMBER?text=Hello%20LITE%20HOUSE%20Support%2C%20I%20need%20help%20with..." target="_blank">
-  <span>💬</span>
-  <span class="wa-float-tooltip">Chat Support</span>
-</a>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
