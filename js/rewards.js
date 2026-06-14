@@ -1,6 +1,11 @@
 // =============================================================
-// LITE HOUSE - Reward Distribution Engine
-// Checks every 24h and distributes mining rewards automatically
+// LITE HOUSE - Daily Mining Reward Engine
+//
+// Distributes daily mining rewards based on the user's active plan.
+// Referral commissions are NOT handled here anymore.
+// (Referral commission is now a one-time 10% of plan cost,
+//  paid instantly at plan activation — see mining.html)
+//
 // Depends on: firebase-config.js (for PLANS, db, auth)
 // =============================================================
 
@@ -37,7 +42,7 @@ function checkAndDistributeRewards(uid, userData) {
     return Promise.resolve({ hoursRemaining: 24 - hoursSinceLast });
   }
 
-  // Calculate daily reward
+  // Calculate daily reward — total ROI spread evenly across the plan duration
   var totalROI    = (plan.cost * plan.roiPercent) / 100;
   var dailyReward = parseFloat((totalROI / plan.durationDays).toFixed(4));
 
@@ -61,39 +66,10 @@ function checkAndDistributeRewards(uid, userData) {
   });
 
   return batch.commit().then(function () {
-    // Non-blocking referral commission
-    if (userData.referredBy) {
-      distributeReferralCommission(userData.referredBy, dailyReward, uid);
-    }
     return { rewarded: true, amount: dailyReward };
   }).catch(function (err) {
     console.error("Reward distribution error:", err);
     return null;
-  });
-}
-
-function distributeReferralCommission(referrerUid, rewardAmount, fromUid) {
-  var commission = parseFloat((rewardAmount * 0.10).toFixed(4));
-  var batch      = db.batch();
-
-  var refRef = db.collection("users").doc(referrerUid);
-  batch.update(refRef, {
-    walletBalance:    firebase.firestore.FieldValue.increment(commission),
-    referralEarnings: firebase.firestore.FieldValue.increment(commission)
-  });
-
-  var txRef = db.collection("transactions").doc();
-  batch.set(txRef, {
-    userId:    referrerUid,
-    type:      "referral_bonus",
-    amount:    commission,
-    fromUser:  fromUid,
-    note:      "Referral commission (10%)",
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
-
-  return batch.commit().catch(function (err) {
-    console.error("Referral commission error:", err);
   });
 }
 

@@ -10,7 +10,8 @@ function buildSidebar(activePage) {
     { id: "deposit",      icon: "💳", label: "Deposit",      href: "deposit.html"      },
     { id: "withdraw",     icon: "💸", label: "Withdraw",     href: "withdraw.html"     },
     { id: "transactions", icon: "📋", label: "Transactions", href: "transactions.html" },
-    { id: "referral",     icon: "🔗", label: "Referral",     href: "referral.html"     }
+    { id: "referral",     icon: "🔗", label: "Referral",     href: "referral.html"     },
+    { id: "contact",      icon: "💬", label: "Support",      href: "contact.html"      }
   ];
 
   var navHTML = navItems.map(function (item) {
@@ -47,6 +48,24 @@ function buildSidebar(activePage) {
     '<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>';
 
   document.body.insertAdjacentHTML("afterbegin", sidebarHTML);
+
+  // ── Inject floating WhatsApp button on all protected pages ──
+  // ⚠ REPLACE: Change YOUR_WHATSAPP_NUMBER below (country code + number, no + or spaces)
+  // Example for Nigeria: 2348012345678
+  var WA_NUMBER  = "YOUR_WHATSAPP_NUMBER";
+  var WA_MESSAGE = encodeURIComponent("Hello LITE HOUSE Support, I need help with...");
+  var WA_URL     = "https://wa.me/" + WA_NUMBER + "?text=" + WA_MESSAGE;
+
+  // Only inject if not already on contact page (it has its own)
+  if (activePage !== "contact") {
+    var floatBtn = document.createElement("a");
+    floatBtn.href      = WA_URL;
+    floatBtn.target    = "_blank";
+    floatBtn.className = "wa-float-global";
+    floatBtn.title     = "Chat with Support";
+    floatBtn.innerHTML = "<span>💬</span><span class='wa-float-tip'>Support</span>";
+    document.body.appendChild(floatBtn);
+  }
 }
 
 function buildTopbar(title) {

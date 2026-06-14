@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Support — LITE HOUSE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+
+    /* ── Contact Cards ───────────────────────────────────── */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .contact-card {
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      transition: transform 0.25s, box-shadow 0.25s;
+      cursor: pointer;
+    }
+    .contact-card:hover {
+      transform: translateY(-4px);
+    }
+    .contact-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--card-hover-bg);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .contact-card:hover::before { opacity: 1; }
+
+    /* WhatsApp */
+    .contact-card.whatsapp {
+      background: linear-gradient(135deg, #0A1A10, #0D2415);
+      border: 1px solid rgba(37,211,102,0.25);
+      --card-hover-bg: rgba(37,211,102,0.04);
+      box-shadow: 0 4px 32px rgba(37,211,102,0.08);
+    }
+    .contact-card.whatsapp:hover {
+      border-color: rgba(37,211,102,0.45);
+      box-shadow: 0 8px 40px rgba(37,211,102,0.15);
+    }
+
+    /* Telegram */
+    .contact-card.telegram {
+      background: linear-gradient(135deg, #0A0F1A, #0C1524);
+      border: 1px solid rgba(0,136,204,0.25);
+      --card-hover-bg: rgba(0,136,204,0.04);
+      box-shadow: 0 4px 32px rgba(0,136,204,0.08);
+    }
+    .contact-card.telegram:hover {
+      border-color: rgba(0,136,204,0.45);
+      box-shadow: 0 8px 40px rgba(0,136,204,0.15);
+    }
+
+    .cc-icon {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      display: grid; place-items: center;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    .whatsapp .cc-icon { background: rgba(37,211,102,0.12); }
+    .telegram .cc-icon { background: rgba(0,136,204,0.12); }
+
+    .cc-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .whatsapp .cc-label { color: rgba(37,211,102,0.7); }
+    .telegram .cc-label { color: rgba(0,136,204,0.7); }
+
+    .cc-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 6px;
+    }
+    .cc-desc {
+      font-size: 0.85rem;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+    .cc-btn {
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.03em;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .whatsapp .cc-btn {
+      background: #25D366;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(37,211,102,0.3);
+    }
+    .whatsapp .cc-btn:hover { background: #1ebe5a; }
+    .telegram .cc-btn {
+      background: #0088CC;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(0,136,204,0.3);
+    }
+    .telegram .cc-btn:hover { background: #0077BB; }
+
+    .cc-status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.75rem;
+      color: var(--text-2);
+      margin-top: auto;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #25D366;
+      box-shadow: 0 0 6px #25D366;
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+    .status-dot.blue { background: #0088CC; box-shadow: 0 0 6px #0088CC; }
+
+    /* ── Primary CTA badge (WhatsApp only) ───────────────── */
+    .primary-badge {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: rgba(37,211,102,0.15);
+      border: 1px solid rgba(37,211,102,0.3);
+      border-radius: 100px;
+      padding: 3px 12px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #25D366;
+    }
+
+    /* ── FAQ Section ──────────────────────────────────────── */
+    .faq-section { margin-bottom: 32px; }
+
+    .faq-category {
+      margin-bottom: 28px;
+    }
+    .faq-category-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .faq-cat-icon {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: var(--gold-glow);
+      display: grid; place-items: center;
+      font-size: 0.9rem;
+    }
+
+    .faq-item {
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .faq-item.open {
+      border-color: rgba(240,192,64,0.2);
+    }
+
+    .faq-question {
+      width: 100%;
+      background: var(--surface);
+      border: none;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.2s;
+    }
+    .faq-question:hover { background: var(--surface-2); }
+    .faq-item.open .faq-question { background: var(--surface-2); }
+
+    .faq-q-text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-1);
+      line-height: 1.4;
+    }
+    .faq-chevron {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      display: grid; place-items: center;
+      flex-shrink: 0;
+      font-size: 0.7rem;
+      color: var(--text-2);
+      transition: transform 0.25s, background 0.2s;
+    }
+    .faq-item.open .faq-chevron {
+      transform: rotate(180deg);
+      background: var(--gold-glow);
+      color: var(--gold);
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1);
+    }
+    .faq-item.open .faq-answer {
+      max-height: 400px;
+    }
+    .faq-answer-inner {
+      padding: 0 20px 18px;
+      font-size: 0.875rem;
+      color: var(--text-2);
+      line-height: 1.75;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding-top: 14px;
+    }
+    .faq-answer-inner strong { color: var(--text-1); font-weight: 600; }
+    .faq-answer-inner .tag {
+      display: inline-block;
+      background: var(--gold-glow);
+      border: 1px solid rgba(240,192,64,0.2);
+      color: var(--gold);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+    }
+
+    /* ── Still need help banner ───────────────────────────── */
+    .help-banner {
+      background: linear-gradient(135deg, rgba(240,192,64,0.07), rgba(240,120,20,0.05));
+      border: 1px solid rgba(240,192,64,0.18);
+      border-radius: var(--radius-lg);
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .hb-text h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      color: var(--text-1);
+      margin-bottom: 6px;
+    }
+    .hb-text p {
+      font-size: 0.85rem;
+      color: var(--text-2);
+    }
+
+    /* ── Floating WhatsApp button (all pages) ─────────────── */
+    .wa-float {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: #25D366;
+      display: grid; place-items: center;
+      font-size: 28px;
+      box-shadow: 0 4px 20px rgba(37,211,102,0.5);
+      cursor: pointer;
+      text-decoration: none;
+      z-index: 999;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .wa-float:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 28px rgba(37,211,102,0.65);
+    }
+    .wa-float-tooltip {
+      position: absolute;
+      right: 68px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      color: var(--text-1);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      box-shadow: var(--shadow-card);
+    }
+    .wa-float:hover .wa-float-tooltip { opacity: 1; }
+
+    @media(max-width: 680px) {
+      .contact-grid { grid-template-columns: 1fr; }
+      .help-banner  { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <div class="page-body">
+
+      <!-- Page header -->
+      <div style="margin-bottom:28px;">
+        <h2 style="font-family:var(--font-display);font-size:1.6rem;margin-bottom:6px;">Support &amp; Help</h2>
+        <p style="color:var(--text-2);font-size:.9rem;">Reach out via WhatsApp or Telegram, or browse the FAQ below.</p>
+      </div>
+
+      <!-- Contact Cards -->
+      <div class="contact-grid">
+
+        <!-- WhatsApp (PRIMARY) -->
+        <!-- ⚠ REPLACE: Change YOUR_WHATSAPP_NUMBER to your number with country code, no + or spaces -->
+        <!-- Example: 2348012345678 for a Nigerian number -->
+        <a class="contact-card whatsapp" href="https://wa.me/YOUR_WHATSAPP_NUMBER?text=Hello%20LITE%20HOUSE%20Support%2C%20I%20need%20help%20with..." target="_blank">
+          <div class="primary-badge">Primary</div>
+          <div class="cc-icon">💬</div>
+          <div>
+            <div class="cc-label">Fastest Response</div>
+            <div class="cc-title">WhatsApp Support</div>
+            <div class="cc-desc">Chat directly with our support team. Average response time under 2 hours during business hours.</div>
+          </div>
+          <div class="cc-btn">
+            <span>💬</span> Chat on WhatsApp
+          </div>
+          <div class="cc-status">
+            <div class="status-dot"></div>
+            <span>Typically replies within 2 hours</span>
+          </div>
+        </a>
+
+        <!-- Telegram -->
+        <!-- ⚠ REPLACE: Change YOUR_TELEGRAM_USERNAME to your Telegram channel/group username -->
+        <!-- Example: litehouse_official -->
+        <a class="contact-card telegram" href="https://t.me/YOUR_TELEGRAM_USERNAME" target="_blank">
+          <div class="cc-icon">✈️</div>
+          <div>
+            <div class="cc-label">Community &amp; Announcements</div>
+            <div class="cc-title">Telegram Channel</div>
+            <div class="cc-desc">Join our official Telegram for platform updates, announcements, and community support from fellow members.</div>
+          </div>
+          <div class="cc-btn">
+            <span>✈️</span> Join on Telegram
+          </div>
+          <div class="cc-status">
+            <div class="status-dot blue"></div>
+            <span>News &amp; updates posted daily</span>
+          </div>
+        </a>
+
+      </div>
+
+      <!-- FAQ Section -->
+      <div class="faq-section">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Frequently Asked Questions</div>
+              <div class="card-subtitle">Tap any question to expand the answer</div>
+            </div>
+          </div>
+
+          <!-- DEPOSITS -->
+          <div class="faq-category">
+            <div class="faq-category-title">
+              <div class="faq-cat-icon">💳</div>
+              Deposits
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">What cryptocurrencies can I deposit?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                We currently accept <strong>USDT, BTC, ETH, SOL, LTC, and TON</strong>. Each coin supports multiple networks — for example USDT is available on TRC20, ERC20, and BEP20. Always confirm the correct network before sending to avoid loss of funds.
+              </div></div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">How long does it take for a deposit to be approved?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                Once you submit your deposit request, our admin team manually reviews and approves it — typically within <strong>1 to 24 hours</strong>. You will see the status update from <span class="tag">pending</span> to <span class="tag">approved</span> in your Deposit History, and your wallet balance will be credited instantly on approval.
+              </div></div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">What is the minimum deposit amount?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                The minimum deposit is <strong>$5 USD</strong> equivalent in any supported cryptocurrency. There is no maximum deposit limit.
+              </div></div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">What if I sent funds to the wrong address or network?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                Unfortunately, blockchain transactions are <strong>irreversible</strong>. Funds sent to the wrong address or on the wrong network cannot be recovered. Always double-check the wallet address and selected network before sending. Contact our support on WhatsApp immediately if you believe there is an issue.
+              </div></div>
+            </div>
+          </div>
+
+          <!-- WITHDRAWALS -->
+          <div class="faq-category">
+            <div class="faq-category-title">
+              <div class="faq-cat-icon">💸</div>
+              Withdrawals
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">How do I request a withdrawal?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                Go to <strong>Withdraw</strong> in the sidebar. Enter the amount you want to withdraw and your <strong>Litecoin (LTC) wallet address</strong>. Submit the request — admin will review, approve, and send the LTC to your address within 24–48 hours. All withdrawals are paid exclusively in LTC.
+              </div></div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">Why are withdrawals locked on the Free plan?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                The Free plan is a starter plan gifted to every new member worth <strong>$5</strong>. Withdrawals are disabled on this plan to encourage reinvestment. To unlock withdrawals, upgrade to the <strong>Basic ($20), Executive ($50), Premium ($100), Elite ($500), or Prestige ($1000)</strong> plan using your earned balance or a fresh deposit.
+              </div></div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">What is the minimum withdrawal amount?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                The minimum withdrawal is <strong>$1.00 USD</strong> equivalent in LTC. Withdrawal requests below this amount will not be processed.
+              </div></div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">My withdrawal is still showing "pending" — what do I do?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                Withdrawals are processed within <strong>24–48 hours</strong>. If yours has been pending longer than 48 hours, please contact support on WhatsApp with your <strong>username and withdrawal amount</strong> and we'll resolve it promptly.
+              </div></div>
+            </div>
+          </div>
+
+          <!-- MINING PLANS -->
+          <div class="faq-category">
+            <div class="faq-category-title">
+              <div class="faq-cat-icon">⛏️</div>
+              Mining Plans
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">What mining plans are available?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                We offer <strong>6 plans</strong> — all run for 30 days:
+                <br/><br/>
+                🌱 <strong>Free</strong> — $5 (gifted on signup) · 100% ROI · No withdrawals<br/>
+                ⚡ <strong>Basic</strong> — $20 · 150% ROI · Withdrawals enabled<br/>
+                🏆 <strong>Executive</strong> — $50 · 175% ROI · Withdrawals enabled<br/>
+                💎 <strong>Premium</strong> — $100 · 200% ROI · Withdrawals enabled<br/>
+                🔷 <strong>Elite</strong> — $500 · Custom ROI · Withdrawals enabled<br/>
+                👑 <strong>Prestige</strong> — $1000 · Custom ROI · Withdrawals enabled
+              </div></div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">Can I activate a new plan before my current one expires?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                Yes. Activating a new plan will <strong>replace your current active plan</strong> immediately. The remaining days of your old plan will not be refunded, so we recommend activating a new plan only after your current plan expires or when upgrading intentionally.
+              </div></div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">What happens when my plan expires after 30 days?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                Once your 30-day plan expires, mining stops automatically and your balance retains all earned rewards. You can then activate a new plan using your available wallet balance or make a fresh deposit to continue earning.
+              </div></div>
+            </div>
+          </div>
+
+          <!-- REWARDS & REFERRALS -->
+          <div class="faq-category" style="margin-bottom:0;">
+            <div class="faq-category-title">
+              <div class="faq-cat-icon">🎁</div>
+              Rewards &amp; Referrals
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">When are my daily mining rewards distributed?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                Rewards are distributed automatically every <strong>24 hours</strong> from when you activated your plan. They are credited directly to your wallet balance. You can see the countdown to your next reward on your Dashboard under the Mining widget.
+              </div></div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">How does the referral commission work?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                Share your unique referral code with anyone. When they register using your code and activate a mining plan, you earn <strong>10% of every daily reward</strong> they receive — automatically, every 24 hours, for the full duration of their plan. This stacks with your own mining rewards with no cap.
+              </div></div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">What are the Team Leader bonuses?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                Team Leader bonuses are <strong>one-time cash rewards</strong> for growing your referral network:<br/><br/>
+                👥 <strong>$50 bonus</strong> — when you reach 20 active mining members in your team<br/>
+                🌟 <strong>$100 bonus</strong> — when you scale to 50 active mining members<br/><br/>
+                These are credited automatically to your wallet the moment a member's activation triggers the threshold. You can track your progress on the <strong>Referral</strong> page.
+              </div></div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-q-text">Where do I find my referral code and link?</span>
+                <span class="faq-chevron">▼</span>
+              </button>
+              <div class="faq-answer"><div class="faq-answer-inner">
+                Your referral code and shareable link are visible on the <strong>Referral page</strong> in the sidebar. You can copy the code or link directly, or use the share buttons to send it to WhatsApp, Telegram, or Twitter in one tap.
+              </div></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Still need help -->
+      <div class="help-banner">
+        <div class="hb-text">
+          <h3>Still need help?</h3>
+          <p>Our support team is ready to assist you. Reach out on WhatsApp for the fastest response.</p>
+        </div>
+        <!-- ⚠ REPLACE: Same WhatsApp number as above -->
+        <a href="https://wa.me/YOUR_WHATSAPP_NUMBER?text=Hello%20LITE%20HOUSE%20Support%2C%20I%20need%20help%20with..." target="_blank" class="btn btn-primary" style="width:auto;white-space:nowrap;background:linear-gradient(135deg,#25D366,#1aad52);box-shadow:0 4px 16px rgba(37,211,102,0.3);">
+          💬 &nbsp;Chat With Us
+        </a>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div>
+
+<!-- Floating WhatsApp Button -->
+<!-- ⚠ REPLACE: Same WhatsApp number -->
+<a class="wa-float" href="https://wa.me/YOUR_WHATSAPP_NUMBER?text=Hello%20LITE%20HOUSE%20Support%2C%20I%20need%20help%20with..." target="_blank">
+  <span>💬</span>
+  <span class="wa-float-tooltip">Chat Support</span>
+</a>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/rewards.js"></script>
+<script>
+  buildSidebar("contact");
+  buildTopbar("Support");
+
+  requireAuth(function (user, userData) {
+    populateSidebarUser(userData);
+  });
+
+  function toggleFAQ(btn) {
+    var item = btn.closest(".faq-item");
+    var isOpen = item.classList.contains("open");
+
+    // Close all open items in this category
+    var allItems = item.closest(".faq-category").querySelectorAll(".faq-item");
+    allItems.forEach(function (i) { i.classList.remove("open"); });
+
+    // Open clicked one if it wasn't already open
+    if (!isOpen) item.classList.add("open");
+  }
+</script>
+</body>
+</html>

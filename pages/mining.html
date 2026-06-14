@@ -126,7 +126,8 @@
 <script src="../js/firebase-config.js"></script>
 <script src="../js/sidebar.js"></script>
 <script src="../js/rewards.js"></script>
-    <script src="../js/milestones.js"></script>
+<script src="../js/referral-bonus.js"></script>
+<script src="../js/milestones.js"></script>
 <script>
   buildSidebar("mining");
   buildTopbar("Mining Plans");
@@ -137,7 +138,9 @@
     free:      { color:"var(--text-3)", emoji:"🌱" },
     basic:     { color:"var(--cyan)",   emoji:"⚡"  },
     executive: { color:"var(--gold)",   emoji:"🏆"  },
-    premium:   { color:"#BF7FFF",       emoji:"💎"  }
+    premium:   { color:"#BF7FFF",       emoji:"💎"  },
+    elite:     { color:"#00FFD4",       emoji:"🔷"  },
+    prestige:  { color:"#FFD700",       emoji:"👑"  }
   };
 
   requireAuth(async (user, userData) => {
@@ -170,9 +173,21 @@
     const grid = document.getElementById("plans-grid");
     grid.innerHTML = Object.entries(PLANS).map(([key, plan]) => {
       const isCurrent  = d.activePlan === key && d.tradingActive;
-      const totalROI   = (plan.cost * plan.roiPercent / 100);
-      const dailyRwd   = (totalROI / plan.durationDays).toFixed(4);
-      const meta       = planMeta[key];
+
+      // ── Payout math ──────────────────────────────────────
+      // The capital (plan.cost) is consumed/locked at activation
+      // and is NEVER returned. The ONLY thing paid out to the
+      // user over 30 days is the ROI itself.
+      //
+      //   totalPayout = cost × roiPercent / 100   (this is what
+      //                  actually lands in the wallet over 30 days)
+      //   netProfit   = totalPayout − cost        (the real gain)
+      //   dailyReward = totalPayout / durationDays
+      const totalPayout = (plan.cost * plan.roiPercent / 100);
+      const netProfit   = totalPayout - plan.cost;
+      const dailyRwd    = (totalPayout / plan.durationDays).toFixed(4);
+
+      const meta       = planMeta[key] || { color:"var(--gold)", emoji:"⭐" };
       const isPopular  = key === "executive";
       return `
         <div class="plan-card-wrap">
@@ -189,9 +204,9 @@
             <div class="plan-roi">+${plan.roiPercent}% ROI over 30 days</div>
             <div style="height:1px;background:var(--border);"></div>
             <div style="display:flex;flex-direction:column;gap:6px;">
-              <div class="plan-feature">Daily: $${dailyRwd}</div>
-              <div class="plan-feature">Total: $${(plan.cost + totalROI - plan.cost).toFixed(2)} profit</div>
-              <div class="plan-feature">Payout: $${(plan.cost + totalROI).toFixed(2)}</div>
+              <div class="plan-feature">Daily Reward: $${dailyRwd}</div>
+              <div class="plan-feature">Total Payout (30 days): $${totalPayout.toFixed(2)}</div>
+              <div class="plan-feature">Net Profit: $${netProfit.toFixed(2)}</div>
               <div class="plan-feature">${plan.withdrawEnabled ? 'Withdrawals enabled' : 'Withdrawals locked'}</div>
             </div>
             <button class="btn ${isCurrent?'btn-success':'btn-primary'} w-full" style="font-size:.83rem;"
@@ -267,7 +282,25 @@
       showToast(plan.name + " plan activated! Mining starts now.", "success");
       closeModal();
 
-      // Check if referrer hit a milestone (non-blocking)
+      // ── Instant referral commission ────────────────────────
+      // Triggered ONLY on PAID plan activations (not "free").
+      // Referrer earns 10% of the activated plan's cost, credited
+      // instantly to their wallet balance. Non-blocking — a
+      // failure here must never break plan activation.
+      if (currentData.referredBy) {
+        payInstantReferralCommission(
+          currentData.referredBy,
+          plan.cost,
+          selectedPlanKey,
+          currentUser.uid
+        ).then(function (result) {
+          if (result && result.paid) {
+            console.log("Referral commission paid:", result.amount);
+          }
+        });
+      }
+
+      // ── Team leader milestone check (non-blocking) ─────────
       if (currentData.referredBy) {
         checkMilestones(currentData.referredBy).then(function (result) {
           if (result && result.bonusEarned > 0) {
@@ -286,5 +319,9 @@
 
   function closeModal() { document.getElementById("confirm-modal").classList.remove("open"); }
 </script>
+<style>
+  .plan-card.plan-elite    { --plan-color: #00FFD4; }
+  .plan-card.plan-prestige { --plan-color: #FFD700; }
+</style>
 </body>
 </html>
