@@ -160,20 +160,24 @@
 
     setLoading(btn, true);
 
-    // Check referral code first if provided
+    // Check referral code first if provided.
+    // Uses the PUBLIC "referralCodes/{code}" doc (code -> uid mapping)
+    // so this lookup works even BEFORE the user is signed in.
+    // (A where-query on "users" would fail here with permission-denied
+    //  because Firestore rules require isAuth() for reading user docs.)
     var referralCheck = refCode
-      ? db.collection("users").where("referralCode", "==", refCode).limit(1).get()
+      ? db.collection("referralCodes").doc(refCode).get()
       : Promise.resolve(null);
 
-    referralCheck.then(function (refSnap) {
+    referralCheck.then(function (refDoc) {
       var referredBy = null;
       if (refCode) {
-        if (!refSnap || refSnap.empty) {
+        if (!refDoc || !refDoc.exists) {
           showToast("Invalid referral code.", "error");
           setLoading(btn, false, "Create Account");
           return;
         }
-        referredBy = refSnap.docs[0].id;
+        referredBy = refDoc.data().uid;
       }
 
       return auth.createUserWithEmailAndPassword(email, password)
@@ -218,6 +222,18 @@
             // Write user doc — this is critical
             return db.collection("users").doc(uid).set(userData)
               .then(function () {
+                // Register this user's OWN referral code in the public
+                // lookup collection, so future referrals using THEIR
+                // code can resolve uid -> works for unauthenticated lookups.
+                // Non-blocking — won't crash registration if it fails.
+                db.collection("referralCodes").doc(myCode).set({
+                  uid:       uid,
+                  username:  username,
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).catch(function (e) {
+                  console.warn("Referral code registration failed (non-critical):", e.message);
+                });
+
                 // Write transaction log — NON-BLOCKING, won't crash registration if it fails
                 db.collection("transactions").add({
                   userId:    uid,

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Referral Code Backfill — LITE HOUSE Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body class="auth-body">
+<div class="auth-card fade-in" style="max-width:600px;">
+
+  <div style="text-align:center;margin-bottom:24px;">
+    <img src="../assets/logo.png" alt="LITE HOUSE" class="auth-logo-img"/>
+  </div>
+
+  <h2 style="margin-bottom:10px;">🔧 Referral Code Backfill</h2>
+  <p style="color:var(--text-2);font-size:.88rem;line-height:1.6;margin-bottom:24px;">
+    One-time admin tool. Creates a <code class="mono" style="color:var(--gold);">referralCodes/{code}</code> entry
+    for every existing user whose code isn't yet registered in the public lookup collection.
+    This fixes "Invalid referral code" errors for codes shared <strong>before</strong> the registration fix was deployed.
+  </p>
+
+  <div id="status-box" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;font-size:.85rem;color:var(--text-2);min-height:60px;">
+    Sign in as admin to begin...
+  </div>
+
+  <button class="btn btn-primary" id="run-btn" onclick="runBackfill()" disabled>Run Backfill</button>
+
+  <div id="log" style="margin-top:16px;max-height:300px;overflow-y:auto;font-family:var(--font-mono);font-size:.75rem;color:var(--text-2);line-height:1.8;"></div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script>
+  var allUsers = [];
+
+  requireAdmin(function (user, adminData) {
+    document.getElementById("status-box").innerHTML =
+      "✅ Signed in as admin (" + user.email + "). Click below to scan and backfill referral codes.";
+    document.getElementById("run-btn").disabled = false;
+  });
+
+  function log(msg, color) {
+    var el = document.getElementById("log");
+    var line = document.createElement("div");
+    line.style.color = color || "var(--text-2)";
+    line.textContent = msg;
+    el.appendChild(line);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function runBackfill() {
+    var btn = document.getElementById("run-btn");
+    setLoading(btn, true);
+    document.getElementById("log").innerHTML = "";
+    log("Fetching all users...", "var(--cyan)");
+
+    db.collection("users").get().then(function (snap) {
+      allUsers = snap.docs;
+      log("Found " + allUsers.length + " users. Checking referral codes...", "var(--cyan)");
+
+      var created = 0, skipped = 0, errors = 0, noCode = 0;
+      var index = 0;
+
+      function processNext() {
+        if (index >= allUsers.length) {
+          log("─────────────────────────────", "var(--text-3)");
+          log("✅ Done! Created: " + created + " · Already existed: " + skipped + " · No code: " + noCode + " · Errors: " + errors, "var(--green)");
+          setLoading(btn, false, "Run Backfill");
+          document.getElementById("status-box").innerHTML = "✅ Backfill complete. See log below.";
+          return;
+        }
+
+        var doc = allUsers[index];
+        var data = doc.data();
+        var uid  = doc.id;
+        var code = data.referralCode;
+
+        if (!code) {
+          log("⚠ " + (data.username || uid) + " — no referralCode field, skipped", "var(--text-3)");
+          noCode++;
+          index++;
+          processNext();
+          return;
+        }
+
+        db.collection("referralCodes").doc(code).get().then(function (existing) {
+          if (existing.exists) {
+            log("• " + (data.username || uid) + " (" + code + ") — already exists", "var(--text-3)");
+            skipped++;
+            index++;
+            processNext();
+          } else {
+            db.collection("referralCodes").doc(code).set({
+              uid:       uid,
+              username:  data.username || "",
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              backfilled: true
+            }).then(function () {
+              log("✓ " + (data.username || uid) + " (" + code + ") — created", "var(--green)");
+              created++;
+              index++;
+              processNext();
+            }).catch(function (e) {
+              log("✗ " + (data.username || uid) + " (" + code + ") — error: " + e.message, "var(--red)");
+              errors++;
+              index++;
+              processNext();
+            });
+          }
+        }).catch(function (e) {
+          log("✗ " + (data.username || uid) + " — read error: " + e.message, "var(--red)");
+          errors++;
+          index++;
+          processNext();
+        });
+      }
+
+      processNext();
+
+    }).catch(function (e) {
+      log("✗ Failed to fetch users: " + e.message, "var(--red)");
+      setLoading(btn, false, "Run Backfill");
+    });
+  }
+</script>
+</body>
+</html>
