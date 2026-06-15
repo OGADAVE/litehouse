@@ -27,12 +27,12 @@
 
   <!-- Tabs -->
   <div class="auth-tabs">
-    <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
-    <button class="auth-tab" onclick="switchTab('register')">Register</button>
+    <button class="auth-tab" onclick="switchTab('login')">Sign In</button>
+    <button class="auth-tab active" onclick="switchTab('register')">Register</button>
   </div>
 
   <!-- LOGIN -->
-  <div class="tab-pane active" id="tab-login">
+  <div class="tab-pane" id="tab-login">
     <div class="form-group">
       <label class="form-label">Email Address</label>
       <input id="login-email" type="email" class="form-control" placeholder="you@example.com"/>
@@ -51,7 +51,7 @@
   </div>
 
   <!-- REGISTER -->
-  <div class="tab-pane" id="tab-register">
+  <div class="tab-pane active" id="tab-register">
     <div class="form-group">
       <label class="form-label">Username</label>
       <input id="reg-username" type="text" class="form-control" placeholder="e.g. cryptoking"/>
@@ -122,6 +122,23 @@
     document.getElementById("tab-login").classList.toggle("active", tab === "login");
     document.getElementById("tab-register").classList.toggle("active", tab === "register");
   }
+
+  // ── Auto-fill referral code from URL ───────────────────────
+  // A referral link looks like: https://litehouse-ai.top/index.html?ref=VIRGZZ2
+  // On load, read the "ref" query param and pre-fill the
+  // referral code field on the Register tab (which is now default).
+  (function autoFillReferralCode() {
+    var params = new URLSearchParams(window.location.search);
+    var ref     = params.get("ref");
+    if (ref) {
+      var refInput = document.getElementById("reg-referral");
+      if (refInput) {
+        refInput.value = ref.trim().toUpperCase();
+        // Make the field read-only-ish visually (still editable if needed)
+        refInput.style.borderColor = "rgba(240,192,64,0.4)";
+      }
+    }
+  })();
 
   function doLogin() {
     var email    = document.getElementById("login-email").value.trim();
