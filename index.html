@@ -182,48 +182,59 @@
           var myCode = generateReferralCode(username);
           var planEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-          // Send verification email (non-blocking - don't fail if this fails)
-          cred.user.sendEmailVerification().catch(function (e) {
-            console.warn("Verification email failed:", e.message);
-          });
+          // ── Force-refresh the ID token before any Firestore write ──
+          // Right after createUserWithEmailAndPassword, the locally
+          // cached ID token may not yet carry the new uid claims used
+          // by Firestore security rules (request.auth.uid). This
+          // causes an intermittent "permission-denied / Missing or
+          // insufficient permissions" error on the FIRST write,
+          // especially on mobile networks. Forcing a refresh here
+          // guarantees Firestore sees a token that matches `uid`.
+          return cred.user.getIdToken(true).then(function () {
 
-          var userData = {
-            username:           username,
-            email:              email,
-            referralCode:       myCode,
-            referredBy:         referredBy,
-            walletBalance:      5,
-            tradingEarnings:    0,
-            referralEarnings:   0,
-            activePlan:         "free",
-            tradingActive:      true,
-            tradingStartTime:   firebase.firestore.FieldValue.serverTimestamp(),
-            lastRewardTime:     firebase.firestore.FieldValue.serverTimestamp(),
-            planEndDate:        planEnd,
-            milestone20Claimed: false,
-            milestone50Claimed: false,
-            createdAt:          firebase.firestore.FieldValue.serverTimestamp()
-          };
-
-          // Write user doc — this is critical
-          return db.collection("users").doc(uid).set(userData)
-            .then(function () {
-              // Write transaction log — NON-BLOCKING, won't crash registration if it fails
-              db.collection("transactions").add({
-                userId:    uid,
-                type:      "plan_purchase",
-                amount:    5,
-                plan:      "free",
-                note:      "Free starter plan credited",
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-              }).catch(function (e) {
-                console.warn("Transaction log failed (non-critical):", e.message);
-              });
-
-              // Registration successful
-              showToast("Account created! Check your email to verify.", "success");
-              setTimeout(function () { window.location.href = "pages/verify-email.html"; }, 1500);
+            // Send verification email (non-blocking - don't fail if this fails)
+            cred.user.sendEmailVerification().catch(function (e) {
+              console.warn("Verification email failed:", e.message);
             });
+
+            var userData = {
+              username:           username,
+              email:              email,
+              referralCode:       myCode,
+              referredBy:         referredBy,
+              walletBalance:      5,
+              tradingEarnings:    0,
+              referralEarnings:   0,
+              activePlan:         "free",
+              tradingActive:      true,
+              tradingStartTime:   firebase.firestore.FieldValue.serverTimestamp(),
+              lastRewardTime:     firebase.firestore.FieldValue.serverTimestamp(),
+              planEndDate:        planEnd,
+              milestone20Claimed: false,
+              milestone50Claimed: false,
+              createdAt:          firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // Write user doc — this is critical
+            return db.collection("users").doc(uid).set(userData)
+              .then(function () {
+                // Write transaction log — NON-BLOCKING, won't crash registration if it fails
+                db.collection("transactions").add({
+                  userId:    uid,
+                  type:      "plan_purchase",
+                  amount:    5,
+                  plan:      "free",
+                  note:      "Free starter plan credited",
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).catch(function (e) {
+                  console.warn("Transaction log failed (non-critical):", e.message);
+                });
+
+                // Registration successful
+                showToast("Account created! Check your email to verify.", "success");
+                setTimeout(function () { window.location.href = "pages/verify-email.html"; }, 1500);
+              });
+          });
         });
 
     }).catch(function (e) {
