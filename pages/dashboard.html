@@ -24,6 +24,12 @@
           <div class="stat-sub">USDT equivalent</div>
         </div>
         <div class="stat-card cyan fade-in">
+  <div class="stat-icon">🔒</div>
+  <div class="stat-label">Active Plan Balance</div>
+  <div class="stat-value mono" id="stat-active-plan">—</div>
+  <div class="stat-sub" id="stat-active-plan-sub">Consumed capital</div>
+</div>
+        <div class="stat-card cyan fade-in">
           <div class="stat-icon">⛏</div>
           <div class="stat-label">Mining Earnings</div>
           <div class="stat-value mono" id="stat-mining">—</div>
@@ -203,12 +209,40 @@
   });
 
   function renderStats(d) {
-    const totalW = 0; // loaded separately
-    setText("stat-balance",     `$${formatCurrency(d.walletBalance)}`);
-    setText("stat-mining",      `$${formatCurrency(d.tradingEarnings)}`);
-    setText("stat-referral",    `$${formatCurrency(d.referralEarnings)}`);
-    loadWithdrawalTotal(firebase.auth().currentUser?.uid);
+  var plan = PLANS[d.activePlan];
+
+  // Active Plan Balance — the capital currently locked/invested
+  // in the active plan (consumed at activation, never withdrawn back)
+  var activePlanBalance = (d.tradingActive && plan) ? plan.cost : 0;
+
+  // Available Balance — ONLY the withdrawable portion.
+  // If the active plan doesn't allow withdrawals (e.g. Free plan),
+  // nothing is withdrawable yet, even though walletBalance > 0.
+  var withdrawable = (d.tradingActive && plan && plan.withdrawEnabled)
+    ? d.walletBalance
+    : 0;
+
+  setText("stat-balance", "$" + formatCurrency(withdrawable));
+  setText("stat-active-plan", "$" + formatCurrency(activePlanBalance));
+
+  // Helpful sub-labels
+  var balanceSub = document.getElementById("stat-balance-sub");
+  if (balanceSub) {
+    balanceSub.textContent = (plan && !plan.withdrawEnabled)
+      ? "Locked — upgrade to unlock"
+      : "Withdrawable now";
   }
+  var planSub = document.getElementById("stat-active-plan-sub");
+  if (planSub) {
+    planSub.textContent = (d.tradingActive && plan)
+      ? plan.name + " plan — consumed at activation"
+      : "No active plan";
+  }
+
+  setText("stat-mining",   "$" + formatCurrency(d.tradingEarnings));
+  setText("stat-referral", "$" + formatCurrency(d.referralEarnings));
+  loadWithdrawalTotal(firebase.auth().currentUser ? firebase.auth().currentUser.uid : null);
+}
 
   async function loadWithdrawalTotal(uid) {
     if (!uid) return;

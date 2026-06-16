@@ -17,6 +17,7 @@
     .how-num{width:32px;height:32px;border-radius:50%;background:var(--gold-glow);border:1px solid rgba(240,192,64,.3);display:grid;place-items:center;font-family:var(--font-mono);font-weight:600;font-size:.82rem;color:var(--gold);flex-shrink:0;}
     .share-btn{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;font-size:.85rem;font-weight:500;color:var(--text-1);}
     .share-btn:hover{border-color:var(--border-hover);background:var(--surface-3);}
+    .m-card{background:var(--surface-2);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-md);padding:20px;}
   </style>
 </head>
 <body>
@@ -24,11 +25,11 @@
   <div class="main-content">
     <div class="page-body">
 
-      <!-- Hero banner -->
+      <!-- Hero banner — updated to instant commission model -->
       <div style="background:linear-gradient(135deg,rgba(240,192,64,.1),rgba(0,212,255,.06));border:1px solid rgba(240,192,64,.2);border-radius:var(--radius-lg);padding:28px 32px;margin-bottom:24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
         <div style="flex:1;min-width:200px;">
-          <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:800;margin-bottom:6px;">Earn 10% Referral Commission</div>
-          <div style="font-size:.88rem;color:var(--text-2);line-height:1.7;">Invite friends to LITE HOUSE. Every time your referral earns a mining reward, you automatically earn 10% of their reward — forever.</div>
+          <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:800;margin-bottom:6px;">Earn 10% Instant Commission</div>
+          <div style="font-size:.88rem;color:var(--text-2);line-height:1.7;">Invite friends to LITE HOUSE. When your referral activates any paid mining plan, you instantly earn <strong style="color:var(--gold);">10% of the plan cost</strong> — credited directly to your wallet, withdraw anytime.</div>
         </div>
         <div style="font-size:3rem;">🔗</div>
       </div>
@@ -64,23 +65,15 @@
           <div class="card">
             <div class="card-title" style="margin-bottom:14px;">Share Your Link</div>
             <div style="display:flex;flex-direction:column;gap:8px;">
-              <button class="share-btn" onclick="shareWhatsApp()">
-                <span style="font-size:1.2rem;">💬</span> Share on WhatsApp
-              </button>
-              <button class="share-btn" onclick="shareTelegram()">
-                <span style="font-size:1.2rem;">✈️</span> Share on Telegram
-              </button>
-              <button class="share-btn" onclick="shareTwitter()">
-                <span style="font-size:1.2rem;">🐦</span> Share on Twitter/X
-              </button>
-              <button class="share-btn" onclick="shareGeneric()">
-                <span style="font-size:1.2rem;">📤</span> Share via…
-              </button>
+              <button class="share-btn" onclick="shareWhatsApp()"><span style="font-size:1.2rem;">💬</span> Share on WhatsApp</button>
+              <button class="share-btn" onclick="shareTelegram()"><span style="font-size:1.2rem;">✈️</span> Share on Telegram</button>
+              <button class="share-btn" onclick="shareTwitter()"><span style="font-size:1.2rem;">🐦</span> Share on Twitter/X</button>
+              <button class="share-btn" onclick="shareGeneric()"><span style="font-size:1.2rem;">📤</span> Share via…</button>
             </div>
           </div>
         </div>
 
-        <!-- How it works + Referred users -->
+        <!-- How it works + Commission table -->
         <div>
           <div class="card mb-3">
             <div class="card-title" style="margin-bottom:14px;">How It Works</div>
@@ -94,45 +87,48 @@
             <div class="how-step">
               <div class="how-num">2</div>
               <div>
-                <div style="font-weight:600;font-size:.88rem;margin-bottom:3px;">They register & mine</div>
-                <div style="font-size:.78rem;color:var(--text-2);">Your referral creates an account using your code and activates a mining plan.</div>
+                <div style="font-weight:600;font-size:.88rem;margin-bottom:3px;">They register &amp; activate a plan</div>
+                <div style="font-size:.78rem;color:var(--text-2);">Your referral creates an account using your code and activates any paid mining plan.</div>
               </div>
             </div>
             <div class="how-step">
               <div class="how-num">3</div>
               <div>
-                <div style="font-weight:600;font-size:.88rem;margin-bottom:3px;">You earn 10% automatically</div>
-                <div style="font-size:.78rem;color:var(--text-2);">Every daily reward they receive triggers a 10% commission straight to your wallet — no manual claiming.</div>
+                <div style="font-weight:600;font-size:.88rem;margin-bottom:3px;">You earn 10% instantly</div>
+                <div style="font-size:.78rem;color:var(--text-2);">The moment they activate a paid plan, <strong style="color:var(--gold);">10% of the plan cost</strong> is credited directly to your wallet — instantly, no waiting.</div>
               </div>
             </div>
           </div>
 
-          <!-- Commission rates -->
+          <!-- Commission breakdown — instant model -->
           <div class="card">
             <div class="card-title" style="margin-bottom:14px;">Commission Breakdown</div>
-            <div style="font-size:.82rem;color:var(--text-2);margin-bottom:12px;">How much you earn per plan per day:</div>
+            <div style="font-size:.82rem;color:var(--text-2);margin-bottom:12px;">Instant one-time commission per plan activation:</div>
             <table style="width:100%;">
               <thead>
-                <tr><th>Plan</th><th>Their Daily</th><th>Your 10%</th></tr>
+                <tr><th>Plan</th><th>Plan Cost</th><th>Your 10%</th></tr>
               </thead>
               <tbody>
-                <tr><td>Free</td><td class="mono">$0.2500</td><td class="mono text-gold">$0.0250</td></tr>
-                <tr><td>Basic</td><td class="mono">$1.3333</td><td class="mono text-gold">$0.1333</td></tr>
-                <tr><td>Executive</td><td class="mono">$3.7500</td><td class="mono text-gold">$0.3750</td></tr>
-                <tr><td>Premium</td><td class="mono">$8.3333</td><td class="mono text-gold">$0.8333</td></tr>
+                <tr><td>Basic</td>    <td class="mono">$20</td>   <td class="mono text-gold">$2.00</td></tr>
+                <tr><td>Executive</td><td class="mono">$50</td>   <td class="mono text-gold">$5.00</td></tr>
+                <tr><td>Premium</td>  <td class="mono">$100</td>  <td class="mono text-gold">$10.00</td></tr>
+                <tr><td>Elite</td>    <td class="mono">$500</td>  <td class="mono text-gold">$50.00</td></tr>
+                <tr><td>Prestige</td> <td class="mono">$1,000</td><td class="mono text-gold">$100.00</td></tr>
               </tbody>
             </table>
+            <div style="margin-top:10px;font-size:.75rem;color:var(--text-3);padding:8px 12px;background:rgba(240,192,64,.05);border-radius:6px;border:1px solid rgba(240,192,64,.1);">
+              ⚡ Free plan activations do not trigger commission. Paid plans only.
+            </div>
           </div>
         </div>
       </div>
 
-
       <!-- Team Leader Milestones -->
-      <div class="card" style="margin-bottom:20px;">
+      <div class="card" style="margin-top:20px;margin-bottom:20px;">
         <div class="card-header">
           <div>
             <div class="card-title">🏆 Team Leader Milestones</div>
-            <div class="card-subtitle">Bonuses for growing your team</div>
+            <div class="card-subtitle">One-time bonuses for growing your active team</div>
           </div>
           <div style="font-size:.78rem;color:var(--text-2);">
             Active team: <span class="mono text-gold" id="milestone-active-count">—</span>
@@ -140,119 +136,96 @@
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="milestones-grid">
-          <!-- Milestone 1: 20 users -->
-          <div id="m20-card" style="background:var(--surface-2);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-md);padding:20px;">
+
+          <!-- M20 -->
+          <div id="m20-card" class="m-card">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
-              <div>
-                <div style="font-size:1.6rem;margin-bottom:6px;">👥</div>
+              <div><div style="font-size:1.6rem;margin-bottom:6px;">👥</div>
                 <div style="font-weight:700;font-size:.95rem;">20 Active Members</div>
-                <div style="font-size:.78rem;color:var(--text-2);margin-top:3px;">Team Leader Reward</div>
-              </div>
+                <div style="font-size:.78rem;color:var(--text-2);margin-top:3px;">Team Leader Reward</div></div>
               <div style="text-align:right;">
                 <div style="font-family:var(--font-mono);font-size:1.6rem;font-weight:600;color:var(--gold);">$50</div>
                 <div id="m20-badge" style="margin-top:4px;"></div>
               </div>
             </div>
             <div style="margin-bottom:8px;display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-2);">
-              <span id="m20-label">Loading...</span>
-              <span id="m20-pct">0%</span>
+              <span id="m20-label">Loading...</span><span id="m20-pct">0%</span>
             </div>
-            <div class="progress-bar">
-              <div class="progress-fill" id="m20-bar" style="width:0%;background:linear-gradient(90deg,#C8840A,var(--gold));"></div>
-            </div>
+            <div class="progress-bar"><div class="progress-fill" id="m20-bar" style="width:0%;background:linear-gradient(90deg,#C8840A,var(--gold));"></div></div>
           </div>
 
-          <!-- Milestone 2: 50 users -->
-          <div id="m50-card" style="background:var(--surface-2);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-md);padding:20px;">
+          <!-- M50 -->
+          <div id="m50-card" class="m-card">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
-              <div>
-                <div style="font-size:1.6rem;margin-bottom:6px;">🌟</div>
+              <div><div style="font-size:1.6rem;margin-bottom:6px;">🌟</div>
                 <div style="font-weight:700;font-size:.95rem;">50 Active Members</div>
-                <div style="font-size:.78rem;color:var(--text-2);margin-top:3px;">Senior Leader Reward</div>
-              </div>
+                <div style="font-size:.78rem;color:var(--text-2);margin-top:3px;">Senior Leader Reward</div></div>
               <div style="text-align:right;">
                 <div style="font-family:var(--font-mono);font-size:1.6rem;font-weight:600;color:var(--gold);">$100</div>
                 <div id="m50-badge" style="margin-top:4px;"></div>
               </div>
             </div>
             <div style="margin-bottom:8px;display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-2);">
-              <span id="m50-label">Loading...</span>
-              <span id="m50-pct">0%</span>
+              <span id="m50-label">Loading...</span><span id="m50-pct">0%</span>
             </div>
-            <div class="progress-bar">
-              <div class="progress-fill" id="m50-bar" style="width:0%;background:linear-gradient(90deg,#7B4FBF,#BF7FFF);"></div>
-            </div>
+            <div class="progress-bar"><div class="progress-fill" id="m50-bar" style="width:0%;background:linear-gradient(90deg,#7B4FBF,#BF7FFF);"></div></div>
           </div>
 
-          <!-- Milestone 3: 100 users -->
-          <div id="m100-card" style="background:var(--surface-2);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-md);padding:20px;">
+          <!-- M100 -->
+          <div id="m100-card" class="m-card">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
-              <div>
-                <div style="font-size:1.6rem;margin-bottom:6px;">🏆</div>
+              <div><div style="font-size:1.6rem;margin-bottom:6px;">🏆</div>
                 <div style="font-weight:700;font-size:.95rem;">100 Active Members</div>
-                <div style="font-size:.78rem;color:var(--text-2);margin-top:3px;">Top Leader Reward</div>
-              </div>
+                <div style="font-size:.78rem;color:var(--text-2);margin-top:3px;">Top Leader Reward</div></div>
               <div style="text-align:right;">
                 <div style="font-family:var(--font-mono);font-size:1.6rem;font-weight:600;color:var(--gold);">$250</div>
                 <div id="m100-badge" style="margin-top:4px;"></div>
               </div>
             </div>
             <div style="margin-bottom:8px;display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-2);">
-              <span id="m100-label">Loading...</span>
-              <span id="m100-pct">0%</span>
+              <span id="m100-label">Loading...</span><span id="m100-pct">0%</span>
             </div>
-            <div class="progress-bar">
-              <div class="progress-fill" id="m100-bar" style="width:0%;background:linear-gradient(90deg,#BF7FFF,#7B4FBF);"></div>
-            </div>
+            <div class="progress-bar"><div class="progress-fill" id="m100-bar" style="width:0%;background:linear-gradient(90deg,#BF7FFF,#7B4FBF);"></div></div>
           </div>
 
-          <!-- Milestone 4: 200 users -->
-          <div id="m200-card" style="background:var(--surface-2);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-md);padding:20px;">
+          <!-- M200 -->
+          <div id="m200-card" class="m-card">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
-              <div>
-                <div style="font-size:1.6rem;margin-bottom:6px;">🏆</div>
+              <div><div style="font-size:1.6rem;margin-bottom:6px;">💎</div>
                 <div style="font-weight:700;font-size:.95rem;">200 Active Members</div>
-                <div style="font-size:.78rem;color:var(--text-2);margin-top:3px;">Elite Leader Reward</div>
-              </div>
+                <div style="font-size:.78rem;color:var(--text-2);margin-top:3px;">Elite Leader Reward</div></div>
               <div style="text-align:right;">
                 <div style="font-family:var(--font-mono);font-size:1.6rem;font-weight:600;color:var(--gold);">$500</div>
                 <div id="m200-badge" style="margin-top:4px;"></div>
               </div>
             </div>
             <div style="margin-bottom:8px;display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-2);">
-              <span id="m200-label">Loading...</span>
-              <span id="m200-pct">0%</span>
+              <span id="m200-label">Loading...</span><span id="m200-pct">0%</span>
             </div>
-            <div class="progress-bar">
-              <div class="progress-fill" id="m200-bar" style="width:0%;background:linear-gradient(90deg,#7B4FBF,#C8840A);"></div>
-            </div>
-        </div>
+            <div class="progress-bar"><div class="progress-fill" id="m200-bar" style="width:0%;background:linear-gradient(90deg,#7B4FBF,#C8840A);"></div></div>
+          </div>
 
-        <!-- Milestone 5: 500 users -->
-        <div id="m500-card" style="background:var(--surface-2);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-md);padding:20px;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
-            <div> 
-              <div style="font-size:1.6rem;margin-bottom:6px;">👑</div>
-              <div style="font-weight:700;font-size:.95rem;">500 Active Members</div>
-              <div style="font-size:.78rem;color:var(--text-2);margin-top:3px;">Legendary Leader Reward</div>
+          <!-- M500 — full width -->
+          <div id="m500-card" class="m-card" style="grid-column:1/-1;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+              <div><div style="font-size:1.6rem;margin-bottom:6px;">👑</div>
+                <div style="font-weight:700;font-size:.95rem;">500 Active Members</div>
+                <div style="font-size:.78rem;color:var(--text-2);margin-top:3px;">Legendary Leader Reward</div></div>
+              <div style="text-align:right;">
+                <div style="font-family:var(--font-mono);font-size:1.6rem;font-weight:600;color:var(--gold);">$1,500</div>
+                <div id="m500-badge" style="margin-top:4px;"></div>
+              </div>
             </div>
-            <div style="text-align:right;">
-              <div style="font-family:var(--font-mono);font-size:1.6rem;font-weight:600;color:var(--gold);">$1,500</div>
-              <div id="m500-badge" style="margin-top:4px;"></div>
+            <div style="margin-bottom:8px;display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-2);">
+              <span id="m500-label">Loading...</span><span id="m500-pct">0%</span>
             </div>
+            <div class="progress-bar"><div class="progress-fill" id="m500-bar" style="width:0%;background:linear-gradient(90deg,#C8840A,#7B4FBF,#FFD700);"></div></div>
           </div>
-          <div style="margin-bottom:8px;display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-2);">
-            <span id="m500-label">Loading...</span>
-            <span id="m500-pct">0%</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" id="m500-bar" style="width:0%;background:linear-gradient(90deg,#C8840A,#7B4FBF);"></div>
-          </div>
+
         </div>
-      </div>
 
         <div style="margin-top:14px;padding:12px 16px;background:rgba(240,192,64,0.06);border:1px solid rgba(240,192,64,0.15);border-radius:var(--radius-sm);font-size:.8rem;color:var(--text-2);line-height:1.7;">
-          💡 &nbsp;Milestones are <strong style="color:var(--text-1);">one-time bonuses</strong> credited automatically to your wallet when reached. They stack on top of your normal 10% daily referral commissions.
+          💡 &nbsp;Milestones are <strong style="color:var(--text-1);">one-time bonuses</strong> credited automatically to your wallet when reached. They stack on top of your 10% instant referral commissions.
         </div>
       </div>
 
@@ -291,150 +264,174 @@
   buildSidebar("referral");
   buildTopbar("Referral Program");
 
-  let myCode = "", myLink = "";
+  var myCode = "", myLink = "";
 
-  requireAuth(async (user, userData) => {
+  requireAuth(function (user, userData) {
     populateSidebarUser(userData);
     myCode = userData.referralCode || "";
-    myLink = `${location.origin}/index.html?ref=${myCode}`;
+    myLink = location.origin + "/index.html?ref=" + myCode;
 
     document.getElementById("ref-code-display").textContent = myCode;
     document.getElementById("ref-link").textContent         = myLink;
-    document.getElementById("rs-earned").textContent        = `$${formatCurrency(userData.referralEarnings)}`;
+    document.getElementById("rs-earned").textContent        = "$" + formatCurrency(userData.referralEarnings);
 
-    await loadReferredUsers(user.uid);
-    await loadMonthlyEarnings(user.uid);
-    await loadMilestoneProgress(user.uid, userData);
+    loadReferredUsers(user.uid);
+    loadMonthlyEarnings(user.uid);
+    loadMilestoneProgress(user.uid, userData);
   });
 
-  async function loadReferredUsers(uid) {
-    const snap = await db.collection("users")
-      .where("referredBy","==",uid)
-      .orderBy("createdAt","desc").get();
+  // ── Referred users ──────────────────────────────────────────
+  // NO .orderBy() here — that would require a composite Firestore
+  // index. We fetch by referredBy only (single-field, no index
+  // needed) and sort client-side instead.
+  function loadReferredUsers(uid) {
+    db.collection("users")
+      .where("referredBy", "==", uid)
+      .get()
+      .then(function (snap) {
+        var total  = snap.size;
+        var active = 0;
+        var tbody  = document.getElementById("referred-list");
 
-    const total  = snap.size;
-    let active   = 0;
-    const tbody  = document.getElementById("referred-list");
+        if (snap.empty) {
+          document.getElementById("rs-total").textContent        = "0";
+          document.getElementById("rs-active").textContent       = "0";
+          document.getElementById("ref-count-label").textContent = "No referrals yet — share your code!";
+          return;
+        }
 
-    if (snap.empty) {
-      document.getElementById("rs-total").textContent   = "0";
-      document.getElementById("rs-active").textContent  = "0";
-      document.getElementById("ref-count-label").textContent = "No referrals yet — share your code!";
-      return;
-    }
+        // Sort by createdAt descending (client-side — no index required)
+        var docs = snap.docs.slice().sort(function (a, b) {
+          var aT = a.data().createdAt ? a.data().createdAt.toDate ? a.data().createdAt.toDate().getTime() : 0 : 0;
+          var bT = b.data().createdAt ? b.data().createdAt.toDate ? b.data().createdAt.toDate().getTime() : 0 : 0;
+          return bT - aT;
+        });
 
-    // Load earnings per referral from transactions
-    const rows = await Promise.all(snap.docs.map(async d => {
-      const u = d.data();
-      if (u.tradingActive) active++;
+        docs.forEach(function (d) {
+          if (d.data().tradingActive) active++;
+        });
 
-      // Sum commission from this referral
-      const txSnap = await db.collection("transactions")
-        .where("userId","==",uid)
-        .where("fromUser","==",d.id)
-        .where("type","==","referral_bonus").get();
-      let earned = 0;
-      txSnap.forEach(tx => earned += tx.data().amount || 0);
+        document.getElementById("rs-total").textContent        = total;
+        document.getElementById("rs-active").textContent       = active;
+        document.getElementById("ref-count-label").textContent = total + " member" + (total !== 1 ? "s" : "") + " · " + active + " actively mining";
 
-      return { u, id:d.id, earned };
-    }));
+        // Load each user's commission earnings
+        var planLabels = { free:"Free", basic:"Basic", executive:"Executive", premium:"Premium", elite:"Elite", prestige:"Prestige" };
+        var rowPromises = docs.map(function (d) {
+          var u = d.data();
+          return db.collection("transactions")
+            .where("userId", "==", uid)
+            .where("fromUser", "==", d.id)
+            .where("type", "==", "referral_bonus")
+            .get()
+            .then(function (txSnap) {
+              var earned = 0;
+              txSnap.forEach(function (tx) { earned += tx.data().amount || 0; });
+              return { u: u, earned: earned };
+            })
+            .catch(function () { return { u: u, earned: 0 }; });
+        });
 
-    document.getElementById("rs-total").textContent        = total;
-    document.getElementById("rs-active").textContent       = active;
-    document.getElementById("ref-count-label").textContent = `${total} member${total!==1?"s":""} · ${active} actively mining`;
-
-    const planLabels = { free:"Free", basic:"Basic", executive:"Executive", premium:"Premium" };
-    tbody.innerHTML = rows.map(({ u, earned }) => `
-      <tr>
-        <td style="font-weight:500;">${u.username}</td>
-        <td>${u.activePlan ? `<span class="badge badge-pending">${planLabels[u.activePlan]||u.activePlan}</span>` : "<span style='color:var(--text-3);font-size:.78rem;'>None</span>"}</td>
-        <td>${u.tradingActive ? '<span class="badge badge-active">Mining</span>' : '<span class="badge badge-rejected">Inactive</span>'}</td>
-        <td class="mono text-gold">+$${formatCurrency(earned)}</td>
-        <td style="font-size:.75rem;color:var(--text-3);">${formatDate(u.createdAt)}</td>
-      </tr>
-    `).join("");
+        Promise.all(rowPromises).then(function (rows) {
+          tbody.innerHTML = rows.map(function (r) {
+            var u = r.u;
+            return "<tr>" +
+              "<td style='font-weight:500;'>" + (u.username || "—") + "</td>" +
+              "<td>" + (u.activePlan ? "<span class='badge badge-pending'>" + (planLabels[u.activePlan] || u.activePlan) + "</span>" : "<span style='color:var(--text-3);font-size:.78rem;'>None</span>") + "</td>" +
+              "<td>" + (u.tradingActive ? "<span class='badge badge-active'>Mining</span>" : "<span class='badge badge-rejected'>Inactive</span>") + "</td>" +
+              "<td class='mono text-gold'>+$" + formatCurrency(r.earned) + "</td>" +
+              "<td style='font-size:.75rem;color:var(--text-3);'>" + formatDate(u.createdAt) + "</td>" +
+            "</tr>";
+          }).join("");
+        });
+      })
+      .catch(function (e) {
+        console.error("loadReferredUsers error:", e.message);
+        document.getElementById("rs-total").textContent  = "0";
+        document.getElementById("rs-active").textContent = "0";
+      });
   }
 
-  async function loadMonthlyEarnings(uid) {
-    const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
-    const snap = await db.collection("transactions")
-      .where("userId","==",uid)
-      .where("type","==","referral_bonus")
-      .where("createdAt",">=",firebase.firestore.Timestamp.fromDate(startOfMonth))
-      .get();
-    let total = 0;
-    snap.forEach(d => total += d.data().amount || 0);
-    document.getElementById("rs-thismonth").textContent = `$${formatCurrency(total)}`;
+  // ── Monthly earnings ────────────────────────────────────────
+  // Simplified to 2-field query only (no date filter in Firestore)
+  // to avoid composite index requirement. Filter by date client-side.
+  function loadMonthlyEarnings(uid) {
+    var startOfMonth = new Date();
+    startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
+
+    db.collection("transactions")
+      .where("userId", "==", uid)
+      .where("type", "==", "referral_bonus")
+      .get()
+      .then(function (snap) {
+        var total = 0;
+        snap.forEach(function (d) {
+          var ts = d.data().createdAt;
+          var date = ts && ts.toDate ? ts.toDate() : null;
+          if (date && date >= startOfMonth) {
+            total += d.data().amount || 0;
+          }
+        });
+        document.getElementById("rs-thismonth").textContent = "$" + formatCurrency(total);
+      })
+      .catch(function () {
+        document.getElementById("rs-thismonth").textContent = "$0.00";
+      });
   }
 
-
-  async function loadMilestoneProgress(uid, userData) {
-    try {
-      var progress = await getMilestoneProgress(uid, userData);
+  // ── Milestone progress ──────────────────────────────────────
+  function loadMilestoneProgress(uid, userData) {
+    getMilestoneProgress(uid, userData).then(function (progress) {
       setText("milestone-active-count", progress.activeCount);
+      renderMilestoneCard("m20",  progress.milestone20,  progress.activeCount, "rgba(240,192,64,0.4)",  "rgba(0,229,160,0.3)");
+      renderMilestoneCard("m50",  progress.milestone50,  progress.activeCount, "rgba(191,127,255,0.4)", "rgba(0,229,160,0.3)");
+      renderMilestoneCard("m100", progress.milestone100, progress.activeCount, "rgba(191,127,255,0.4)", "rgba(0,229,160,0.3)");
+      renderMilestoneCard("m200", progress.milestone200, progress.activeCount, "rgba(200,132,10,0.4)",  "rgba(0,229,160,0.3)");
+      renderMilestoneCard("m500", progress.milestone500, progress.activeCount, "rgba(255,215,0,0.35)",  "rgba(0,229,160,0.3)");
+    }).catch(function (e) {
+      console.error("Milestone progress error:", e.message);
+    });
+  }
 
-      // Milestone 20
-      var m20 = progress.milestone20;
-      setText("m20-pct",   m20.progress + "%");
-      setText("m20-label", m20.claimed
-        ? "Bonus claimed!"
-        : m20.remaining === 0
-          ? "Threshold reached!"
-          : m20.remaining + " more active member" + (m20.remaining !== 1 ? "s" : "") + " needed");
-      document.getElementById("m20-bar").style.width = m20.progress + "%";
-      document.getElementById("m20-badge").innerHTML = m20.claimed
-        ? '<span class="badge badge-approved">✓ Claimed</span>'
-        : progress.activeCount >= 20
-          ? '<span class="badge badge-approved">Unlocked!</span>'
-          : '<span class="badge badge-pending">Locked</span>';
-      if (m20.claimed) {
-        document.getElementById("m20-card").style.border = "1px solid rgba(0,229,160,0.3)";
-      } else if (progress.activeCount >= 20) {
-        document.getElementById("m20-card").style.border = "1px solid rgba(240,192,64,0.4)";
-      }
-
-      // Milestone 50
-      var m50 = progress.milestone50;
-      setText("m50-pct",   m50.progress + "%");
-      setText("m50-label", m50.claimed
-        ? "Bonus claimed!"
-        : m50.remaining === 0
-          ? "Threshold reached!"
-          : m50.remaining + " more active member" + (m50.remaining !== 1 ? "s" : "") + " needed");
-      document.getElementById("m50-bar").style.width = m50.progress + "%";
-      document.getElementById("m50-badge").innerHTML = m50.claimed
-        ? '<span class="badge badge-approved">✓ Claimed</span>'
-        : progress.activeCount >= 50
-          ? '<span class="badge badge-approved">Unlocked!</span>'
-          : '<span class="badge badge-pending">Locked</span>';
-      if (m50.claimed) {
-        document.getElementById("m50-card").style.border = "1px solid rgba(0,229,160,0.3)";
-      } else if (progress.activeCount >= 50) {
-        document.getElementById("m50-card").style.border = "1px solid rgba(191,127,255,0.4)";
-      }
-
-    } catch(e) {
-      console.error("Milestone progress load error:", e.message);
+  function renderMilestoneCard(id, m, activeCount, unlockedBorder, claimedBorder) {
+    setText(id + "-pct",   m.progress + "%");
+    setText(id + "-label", m.claimed
+      ? "Bonus claimed! ✓"
+      : m.remaining === 0
+        ? "Threshold reached!"
+        : m.remaining + " more active member" + (m.remaining !== 1 ? "s" : "") + " needed");
+    document.getElementById(id + "-bar").style.width = m.progress + "%";
+    document.getElementById(id + "-badge").innerHTML = m.claimed
+      ? "<span class='badge badge-approved'>✓ Claimed</span>"
+      : activeCount >= m.threshold
+        ? "<span class='badge badge-approved'>Unlocked!</span>"
+        : "<span class='badge badge-pending'>Locked</span>";
+    var card = document.getElementById(id + "-card");
+    if (card) {
+      if (m.claimed)                       card.style.border = "1px solid " + claimedBorder;
+      else if (activeCount >= m.threshold) card.style.border = "1px solid " + unlockedBorder;
     }
   }
 
-  function copyCode() {
-    navigator.clipboard.writeText(myCode);
-    showToast("Referral code copied!", "success");
-  }
-  function copyLink() {
-    navigator.clipboard.writeText(myLink);
-    showToast("Referral link copied!", "success");
+  // ── Utilities ───────────────────────────────────────────────
+  function setText(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = val;
   }
 
-  const MSG = () => `Join LITE HOUSE — AI Crypto Trading & Mining Platform 🚀\nEarn daily rewards automatically!\nRegister with my code: ${myCode}\n${myLink}`;
+  function copyCode() { navigator.clipboard.writeText(myCode); showToast("Referral code copied!", "success"); }
+  function copyLink() { navigator.clipboard.writeText(myLink); showToast("Referral link copied!", "success"); }
 
-  function shareWhatsApp() { window.open(`https://wa.me/?text=${encodeURIComponent(MSG())}`,"_blank"); }
-  function shareTelegram() { window.open(`https://t.me/share/url?url=${encodeURIComponent(myLink)}&text=${encodeURIComponent("Join LITE HOUSE — AI Crypto Mining 🚀 Use my code: "+myCode)}`,"_blank"); }
-  function shareTwitter()  { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent("Earning daily crypto rewards with LITE HOUSE AI Mining! Join with my code "+myCode+" 🚀")}&url=${encodeURIComponent(myLink)}`,"_blank"); }
-  async function shareGeneric() {
+  function MSG() {
+    return "Join LITE HOUSE — AI Crypto Trading & Mining Platform 🚀\nEarn daily rewards automatically!\nRegister with my code: " + myCode + "\n" + myLink;
+  }
+
+  function shareWhatsApp() { window.open("https://wa.me/?text=" + encodeURIComponent(MSG()), "_blank"); }
+  function shareTelegram() { window.open("https://t.me/share/url?url=" + encodeURIComponent(myLink) + "&text=" + encodeURIComponent("Join LITE HOUSE — AI Crypto Mining 🚀 Use my code: " + myCode), "_blank"); }
+  function shareTwitter()  { window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent("Earning daily crypto rewards with LITE HOUSE AI Mining! Join with my code " + myCode + " 🚀") + "&url=" + encodeURIComponent(myLink), "_blank"); }
+  function shareGeneric() {
     if (navigator.share) {
-      try { await navigator.share({ title:"LITE HOUSE", text:MSG(), url:myLink }); } catch {}
+      navigator.share({ title:"LITE HOUSE", text:MSG(), url:myLink }).catch(function(){});
     } else copyLink();
   }
 </script>
