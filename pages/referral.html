@@ -281,13 +281,34 @@
   });
 
   // ── Referred users ──────────────────────────────────────────
-  // NO .orderBy() here — that would require a composite Firestore
-  // index. We fetch by referredBy only (single-field, no index
-  // needed) and sort client-side instead.
+  // Strategy:
+  // 1. Load all referral_bonus transactions for current user in ONE
+  //    query (userId + type = 2 fields, no composite index needed).
+  //    Build a map: fromUserUid -> totalEarned (client-side grouping).
+  // 2. Load referred users with single-field query (referredBy = uid).
+  //    Sort client-side. No orderBy = no composite index needed.
+  // This avoids ALL composite index requirements.
   function loadReferredUsers(uid) {
-    db.collection("users")
-      .where("referredBy", "==", uid)
+
+    // Step 1: load all referral bonus transactions at once
+    var earningsMap = {};
+    db.collection("transactions")
+      .where("userId", "==", uid)
+      .where("type",   "==", "referral_bonus")
       .get()
+      .then(function (txSnap) {
+        txSnap.forEach(function (tx) {
+          var fromUser = tx.data().fromUser;
+          if (fromUser) {
+            earningsMap[fromUser] = (earningsMap[fromUser] || 0) + (tx.data().amount || 0);
+          }
+        });
+
+        // Step 2: load referred users
+        return db.collection("users")
+          .where("referredBy", "==", uid)
+          .get();
+      })
       .then(function (snap) {
         var total  = snap.size;
         var active = 0;
@@ -300,55 +321,46 @@
           return;
         }
 
-        // Sort by createdAt descending (client-side — no index required)
+        // Sort by createdAt descending — client-side, no index needed
         var docs = snap.docs.slice().sort(function (a, b) {
-          var aT = a.data().createdAt ? a.data().createdAt.toDate ? a.data().createdAt.toDate().getTime() : 0 : 0;
-          var bT = b.data().createdAt ? b.data().createdAt.toDate ? b.data().createdAt.toDate().getTime() : 0 : 0;
+          var aT = a.data().createdAt && a.data().createdAt.toDate ? a.data().createdAt.toDate().getTime() : 0;
+          var bT = b.data().createdAt && b.data().createdAt.toDate ? b.data().createdAt.toDate().getTime() : 0;
           return bT - aT;
         });
 
-        docs.forEach(function (d) {
-          if (d.data().tradingActive) active++;
-        });
+        docs.forEach(function (d) { if (d.data().tradingActive) active++; });
 
         document.getElementById("rs-total").textContent        = total;
         document.getElementById("rs-active").textContent       = active;
-        document.getElementById("ref-count-label").textContent = total + " member" + (total !== 1 ? "s" : "") + " · " + active + " actively mining";
+        document.getElementById("ref-count-label").textContent =
+          total + " member" + (total !== 1 ? "s" : "") + " · " + active + " actively mining";
 
-        // Load each user's commission earnings
-        var planLabels = { free:"Free", basic:"Basic", executive:"Executive", premium:"Premium", elite:"Elite", prestige:"Prestige" };
-        var rowPromises = docs.map(function (d) {
-          var u = d.data();
-          return db.collection("transactions")
-            .where("userId", "==", uid)
-            .where("fromUser", "==", d.id)
-            .where("type", "==", "referral_bonus")
-            .get()
-            .then(function (txSnap) {
-              var earned = 0;
-              txSnap.forEach(function (tx) { earned += tx.data().amount || 0; });
-              return { u: u, earned: earned };
-            })
-            .catch(function () { return { u: u, earned: 0 }; });
-        });
+        var planLabels = {
+          free:"Free", basic:"Basic", executive:"Executive",
+          premium:"Premium", elite:"Elite", prestige:"Prestige"
+        };
 
-        Promise.all(rowPromises).then(function (rows) {
-          tbody.innerHTML = rows.map(function (r) {
-            var u = r.u;
-            return "<tr>" +
-              "<td style='font-weight:500;'>" + (u.username || "—") + "</td>" +
-              "<td>" + (u.activePlan ? "<span class='badge badge-pending'>" + (planLabels[u.activePlan] || u.activePlan) + "</span>" : "<span style='color:var(--text-3);font-size:.78rem;'>None</span>") + "</td>" +
-              "<td>" + (u.tradingActive ? "<span class='badge badge-active'>Mining</span>" : "<span class='badge badge-rejected'>Inactive</span>") + "</td>" +
-              "<td class='mono text-gold'>+$" + formatCurrency(r.earned) + "</td>" +
-              "<td style='font-size:.75rem;color:var(--text-3);'>" + formatDate(u.createdAt) + "</td>" +
-            "</tr>";
-          }).join("");
-        });
+        tbody.innerHTML = docs.map(function (d) {
+          var u      = d.data();
+          var earned = earningsMap[d.id] || 0;
+          return "<tr>" +
+            "<td style='font-weight:500;'>" + (u.username || "—") + "</td>" +
+            "<td>" + (u.activePlan
+              ? "<span class='badge badge-pending'>" + (planLabels[u.activePlan] || u.activePlan) + "</span>"
+              : "<span style='color:var(--text-3);font-size:.78rem;'>None</span>") + "</td>" +
+            "<td>" + (u.tradingActive
+              ? "<span class='badge badge-active'>Mining</span>"
+              : "<span class='badge badge-rejected'>Inactive</span>") + "</td>" +
+            "<td class='mono text-gold'>+$" + formatCurrency(earned) + "</td>" +
+            "<td style='font-size:.75rem;color:var(--text-3);'>" + formatDate(u.createdAt) + "</td>" +
+          "</tr>";
+        }).join("");
       })
       .catch(function (e) {
-        console.error("loadReferredUsers error:", e.message);
-        document.getElementById("rs-total").textContent  = "0";
-        document.getElementById("rs-active").textContent = "0";
+        console.error("loadReferredUsers error:", e.code, e.message);
+        document.getElementById("rs-total").textContent        = "0";
+        document.getElementById("rs-active").textContent       = "0";
+        document.getElementById("ref-count-label").textContent = "Could not load referrals.";
       });
   }
 
