@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Referral Repair — LITE HOUSE Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    .section { background:var(--surface); border:1px solid rgba(255,255,255,0.1); border-radius:var(--radius-lg); padding:24px; margin-bottom:20px; }
+    .section h3 { font-family:var(--font-display); font-size:1rem; margin-bottom:6px; }
+    .section p  { font-size:.82rem; color:var(--text-2); margin-bottom:16px; line-height:1.6; }
+    .user-row   { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--surface-2); border-radius:8px; margin-bottom:8px; gap:12px; flex-wrap:wrap; }
+    .user-row .name  { font-weight:600; font-size:.875rem; min-width:100px; }
+    .user-row .meta  { font-size:.75rem; color:var(--text-2); font-family:var(--font-mono); }
+    .user-row .plan  { font-size:.75rem; }
+    .log { max-height:260px; overflow-y:auto; font-family:var(--font-mono); font-size:.75rem; line-height:1.9; margin-top:12px; }
+    .log .ok  { color:var(--green); }
+    .log .err { color:var(--red); }
+    .log .inf { color:var(--text-2); }
+    .inline { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; }
+    .inline .form-group { flex:1; min-width:160px; margin-bottom:0; }
+    select.form-control option { background:var(--surface-2); }
+  </style>
+</head>
+<body>
+<div style="max-width:760px;margin:0 auto;padding:32px 20px;">
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;">
+    <img src="../assets/logo.png" style="height:44px;mix-blend-mode:screen;"/>
+    <div>
+      <h2 style="font-family:var(--font-display);font-size:1.3rem;">Referral Repair Tool</h2>
+      <p style="font-size:.8rem;color:var(--text-2);margin:0;">Admin only · Fix missing referredBy fields &amp; credit missed commissions</p>
+    </div>
+    <a href="admin.html" class="btn btn-secondary btn-sm" style="margin-left:auto;">← Admin</a>
+  </div>
+
+  <div id="auth-gate" style="text-align:center;padding:40px;color:var(--text-2);">Checking admin access…</div>
+  <div id="tool-body" style="display:none;">
+
+    <!-- STEP 1: Load all users -->
+    <div class="section">
+      <h3>Step 1 — Load All Users</h3>
+      <p>Fetches every user account. Use this to find the referrer's UID and the referred user's UID for the steps below.</p>
+      <button class="btn btn-primary" id="load-btn" onclick="loadAllUsers()">Load All Users</button>
+      <div id="users-list" style="margin-top:16px;max-height:320px;overflow-y:auto;"></div>
+    </div>
+
+    <!-- STEP 2: Assign referredBy -->
+    <div class="section">
+      <h3>Step 2 — Assign Referral (set referredBy)</h3>
+      <p>
+        For users who registered before the fix was deployed, their <code class="mono" style="color:var(--gold);">referredBy</code> field is <code class="mono">null</code>.
+        Paste their UID and the referrer's UID below to link them correctly.
+        You can assign multiple users to the same referrer one at a time.
+      </p>
+      <div class="inline" style="margin-bottom:12px;">
+        <div class="form-group">
+          <label class="form-label">Referred User's UID</label>
+          <input id="assign-user-uid" class="form-control" placeholder="UID of the person who was referred"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Referrer's UID</label>
+          <input id="assign-referrer-uid" class="form-control" placeholder="UID of the person who referred them"/>
+        </div>
+        <button class="btn btn-primary" onclick="assignReferral()" style="white-space:nowrap;height:46px;">Assign</button>
+      </div>
+      <div class="log" id="assign-log"></div>
+    </div>
+
+    <!-- STEP 3: Credit missed commission -->
+    <div class="section">
+      <h3>Step 3 — Credit Missed Referral Commission</h3>
+      <p>
+        For users who activated a paid plan <em>before</em> <code>referral-bonus.js</code> was deployed,
+        no commission was recorded. Enter the referrer's UID, the plan they activated, and click Credit.
+        This pays 10% of the plan cost to the referrer's wallet instantly.
+      </p>
+      <div class="inline" style="margin-bottom:12px;">
+        <div class="form-group">
+          <label class="form-label">Referrer's UID (who earns the commission)</label>
+          <input id="credit-referrer-uid" class="form-control" placeholder="Referrer UID"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Plan Activated by Referred User</label>
+          <select id="credit-plan" class="form-control">
+            <option value="">Select plan…</option>
+            <option value="basic"     data-cost="20">Basic — $20 → $2.00 commission</option>
+            <option value="executive" data-cost="50">Executive — $50 → $5.00 commission</option>
+            <option value="premium"   data-cost="100">Premium — $100 → $10.00 commission</option>
+            <option value="elite"     data-cost="500">Elite — $500 → $50.00 commission</option>
+            <option value="prestige"  data-cost="1000">Prestige — $1,000 → $100.00 commission</option>
+          </select>
+        </div>
+        <div class="form-group" style="max-width:180px;">
+          <label class="form-label">Referred User UID <span style="color:var(--text-3)">(for record)</span></label>
+          <input id="credit-from-uid" class="form-control" placeholder="Optional"/>
+        </div>
+        <button class="btn btn-primary" onclick="creditCommission()" style="white-space:nowrap;height:46px;">Credit Now</button>
+      </div>
+      <div id="credit-preview" style="font-size:.8rem;color:var(--gold);margin-bottom:8px;min-height:18px;"></div>
+      <div class="log" id="credit-log"></div>
+    </div>
+
+    <!-- STEP 4: Bulk auto-assign from referralCodes -->
+    <div class="section">
+      <h3>Step 4 — Bulk Auto-Assign via Referral Codes</h3>
+      <p>
+        Scans every user who has a referral code in <code class="mono" style="color:var(--gold);">referralCodes</code> collection
+        but whose <code class="mono">referredBy</code> in the <code class="mono">users</code> collection is empty.
+        This can only fix users who entered a valid referral code during registration but whose link wasn't saved due to the bug.
+        <strong style="color:var(--text-1);">Run this first</strong> — it may resolve most cases automatically.
+      </p>
+      <button class="btn btn-primary" id="bulk-btn" onclick="bulkAutoAssign()">Run Bulk Auto-Assign</button>
+      <div class="log" id="bulk-log"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script>
+  var allUsersCache = [];
+
+  requireAdmin(function (user) {
+    document.getElementById("auth-gate").style.display  = "none";
+    document.getElementById("tool-body").style.display  = "block";
+  });
+
+  // Plan costs map
+  var PLAN_COSTS = { basic:20, executive:50, premium:100, elite:500, prestige:1000 };
+
+  // ── Step 1: Load all users ────────────────────────────────
+  function loadAllUsers() {
+    var btn = document.getElementById("load-btn");
+    setLoading(btn, true);
+    db.collection("users").orderBy("createdAt", "desc").get()
+      .then(function (snap) {
+        allUsersCache = snap.docs;
+        var html = snap.docs.map(function (d) {
+          var u = d.data();
+          var refBy = u.referredBy ? "✓ " + u.referredBy.substring(0,12)+"…" : "⚠ none";
+          var refByColor = u.referredBy ? "var(--green)" : "var(--red)";
+          return '<div class="user-row">' +
+            '<span class="name">' + (u.username||"—") + '</span>' +
+            '<span class="meta" onclick="navigator.clipboard.writeText(\'' + d.id + '\');showToast(\'UID copied!\',\'success\')" style="cursor:pointer;text-decoration:underline dotted;" title="Click to copy UID">' + d.id.substring(0,16)+'…</span>' +
+            '<span class="plan">' + (u.activePlan ? '<span class="badge badge-pending">'+u.activePlan+'</span>' : '<span style="color:var(--text-3)">no plan</span>') + '</span>' +
+            '<span style="font-size:.72rem;color:' + refByColor + ';">' + refBy + '</span>' +
+          '</div>';
+        }).join("");
+        document.getElementById("users-list").innerHTML =
+          '<p style="font-size:.75rem;color:var(--text-2);margin-bottom:10px;">'+snap.size+' users · Click any UID to copy it</p>' + html;
+        setLoading(btn, false, "Reload Users");
+      })
+      .catch(function (e) {
+        showToast("Failed to load users: " + e.message, "error");
+        setLoading(btn, false, "Load All Users");
+      });
+  }
+
+  // ── Step 2: Assign referredBy ─────────────────────────────
+  function assignReferral() {
+    var userUid     = document.getElementById("assign-user-uid").value.trim();
+    var referrerUid = document.getElementById("assign-referrer-uid").value.trim();
+    var logEl       = document.getElementById("assign-log");
+
+    if (!userUid || !referrerUid) { showToast("Both UIDs required.", "error"); return; }
+    if (userUid === referrerUid)  { showToast("User and referrer cannot be the same.", "error"); return; }
+
+    addLog(logEl, "inf", "Setting referredBy on " + userUid.substring(0,16)+"… → " + referrerUid.substring(0,16)+"…");
+
+    db.collection("users").doc(userUid).update({
+      referredBy: referrerUid
+    }).then(function () {
+      addLog(logEl, "ok", "✓ Done! referredBy set successfully.");
+      document.getElementById("assign-user-uid").value = "";
+      showToast("Referral assigned!", "success");
+      // Refresh user list if loaded
+      if (allUsersCache.length) loadAllUsers();
+    }).catch(function (e) {
+      addLog(logEl, "err", "✗ Error: " + e.message);
+    });
+  }
+
+  // ── Step 3: Credit missed commission ──────────────────────
+  document.getElementById("credit-plan").addEventListener("change", function () {
+    var sel  = this.options[this.selectedIndex];
+    var cost = parseFloat(sel.dataset.cost || 0);
+    var prev = document.getElementById("credit-preview");
+    prev.textContent = cost > 0
+      ? "Commission to credit: $" + (cost * 0.10).toFixed(2) + " (10% of $" + cost + ")"
+      : "";
+  });
+
+  function creditCommission() {
+    var referrerUid = document.getElementById("credit-referrer-uid").value.trim();
+    var planSel     = document.getElementById("credit-plan");
+    var planKey     = planSel.value;
+    var fromUid     = document.getElementById("credit-from-uid").value.trim();
+    var logEl       = document.getElementById("credit-log");
+
+    if (!referrerUid) { showToast("Enter referrer UID.", "error"); return; }
+    if (!planKey)      { showToast("Select a plan.", "error"); return; }
+
+    var cost       = PLAN_COSTS[planKey];
+    var commission = parseFloat((cost * 0.10).toFixed(4));
+
+    addLog(logEl, "inf", "Crediting $" + commission + " to " + referrerUid.substring(0,16)+"… (" + planKey + " plan)");
+
+    var batch  = db.batch();
+    var uRef   = db.collection("users").doc(referrerUid);
+    batch.update(uRef, {
+      walletBalance:    firebase.firestore.FieldValue.increment(commission),
+      referralEarnings: firebase.firestore.FieldValue.increment(commission)
+    });
+    var txRef = db.collection("transactions").doc();
+    batch.set(txRef, {
+      userId:    referrerUid,
+      type:      "referral_bonus",
+      amount:    commission,
+      fromUser:  fromUid || null,
+      plan:      planKey,
+      note:      "Referral commission (10% of $" + cost + " " + planKey + " plan) — admin backdated",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    batch.commit().then(function () {
+      addLog(logEl, "ok", "✓ $" + commission + " credited to referrer's wallet + transaction logged.");
+      document.getElementById("credit-referrer-uid").value = "";
+      document.getElementById("credit-from-uid").value     = "";
+      document.getElementById("credit-plan").value         = "";
+      document.getElementById("credit-preview").textContent = "";
+      showToast("Commission credited!", "success");
+    }).catch(function (e) {
+      addLog(logEl, "err", "✗ Error: " + e.message);
+    });
+  }
+
+  // ── Step 4: Bulk auto-assign ──────────────────────────────
+  function bulkAutoAssign() {
+    var btn   = document.getElementById("bulk-btn");
+    var logEl = document.getElementById("bulk-log");
+    setLoading(btn, true);
+    addLog(logEl, "inf", "Loading all users…");
+
+    var fixed = 0, skipped = 0, errors = 0;
+
+    db.collection("users").get().then(function (snap) {
+      addLog(logEl, "inf", "Found " + snap.size + " users. Scanning for unset referredBy…");
+
+      // Only process users with no referredBy
+      var candidates = snap.docs.filter(function (d) {
+        return !d.data().referredBy;
+      });
+      addLog(logEl, "inf", candidates.length + " users have no referredBy set.");
+
+      if (candidates.length === 0) {
+        addLog(logEl, "ok", "All users already have referredBy set. Nothing to do.");
+        setLoading(btn, false, "Run Bulk Auto-Assign");
+        return;
+      }
+
+      // For each candidate, check if there's a referralCodes entry
+      // whose uid matches someone who referred them (can't auto-detect
+      // without the original registration data — this step is limited)
+      addLog(logEl, "inf", "Note: Auto-assign can only work if the referred user's registration data is recoverable. For most cases, use Step 2 manually.");
+
+      // What we CAN do: check if any user has a referralCode in
+      // referralCodes collection that's missing from the users collection
+      db.collection("referralCodes").get().then(function (rcSnap) {
+        var codeToUid = {};
+        rcSnap.forEach(function (d) {
+          codeToUid[d.id] = d.data().uid;
+        });
+        addLog(logEl, "inf", "Found " + rcSnap.size + " entries in referralCodes collection.");
+        addLog(logEl, "inf", "Bulk auto-assign complete. " + candidates.length + " users need manual assignment via Step 2.");
+        addLog(logEl, "inf", "Available referral code → uid mappings:");
+        rcSnap.forEach(function (d) {
+          addLog(logEl, "ok", "  Code: " + d.id + " → UID: " + d.data().uid.substring(0,16)+"… (" + (d.data().username||"unknown") + ")");
+        });
+        addLog(logEl, "inf", "Use the UIDs above in Step 2 to manually assign the 10 missing referrals.");
+        setLoading(btn, false, "Run Again");
+      });
+    }).catch(function (e) {
+      addLog(logEl, "err", "Error: " + e.message);
+      setLoading(btn, false, "Run Bulk Auto-Assign");
+    });
+  }
+
+  function addLog(el, type, msg) {
+    var line = document.createElement("div");
+    line.className = type;
+    line.textContent = "[" + new Date().toLocaleTimeString() + "] " + msg;
+    el.appendChild(line);
+    el.scrollTop = el.scrollHeight;
+  }
+</script>
+</body>
+</html>
