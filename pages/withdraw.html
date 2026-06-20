@@ -7,6 +7,42 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    .maintenance-box {
+      text-align: center;
+      padding: 52px 28px;
+      background: var(--surface-2);
+      border: 1px solid rgba(240,192,64,0.2);
+      border-radius: var(--radius-lg);
+    }
+    .maintenance-box .m-icon  { font-size: 3.5rem; margin-bottom: 18px; display: block; }
+    .maintenance-box .m-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 10px;
+    }
+    .maintenance-box .m-desc {
+      font-size: .88rem;
+      color: var(--text-2);
+      line-height: 1.8;
+      max-width: 340px;
+      margin: 0 auto 24px;
+    }
+    .maintenance-box .m-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--gold-glow);
+      border: 1px solid rgba(240,192,64,0.25);
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: .83rem;
+      color: var(--gold);
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
 <div class="app-layout">
@@ -15,7 +51,7 @@
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px;margin:0 auto;" class="w-grid">
 
-        <!-- Withdraw Form -->
+        <!-- Withdraw Form Card -->
         <div class="card">
           <div class="card-header">
             <div>
@@ -24,7 +60,23 @@
             </div>
           </div>
 
-          <!-- Locked notice -->
+          <!-- ══ MAINTENANCE GATE ══════════════════════════════
+               To re-enable withdrawals: set WITHDRAWAL_MAINTENANCE
+               to false in the <script> block below.
+          ══════════════════════════════════════════════════════ -->
+          <div id="maintenance-gate" style="display:none;">
+            <div class="maintenance-box">
+              <span class="m-icon">🔧</span>
+              <div class="m-title">Withdrawal Upgrade in Progress</div>
+              <div class="m-desc">
+                Withdrawals are currently being upgraded.<br/>
+                Kindly check back later.
+              </div>
+              <div class="m-badge">⏳ &nbsp;We'll be back shortly</div>
+            </div>
+          </div>
+
+          <!-- Plan locked notice (Free plan) -->
           <div id="locked-notice" style="display:none;background:var(--red-dim);border:1px solid rgba(255,77,106,.25);border-radius:var(--radius-sm);padding:16px;text-align:center;">
             <div style="font-size:1.5rem;margin-bottom:8px;">🔒</div>
             <div style="font-weight:600;margin-bottom:6px;">Withdrawals Locked</div>
@@ -52,7 +104,7 @@
               <input class="form-control" value="Litecoin Network (LTC)" disabled/>
             </div>
             <div style="background:var(--surface-2);border-radius:var(--radius-sm);padding:12px 14px;font-size:.8rem;color:var(--text-2);margin-bottom:20px;">
-              ℹ &nbsp;Withdrawals are processed immediately, it's usually between 1 - 30 minutes. Withdrawals will be sent as LTC to your provided address.
+              ℹ &nbsp;Withdrawals are processed immediately, usually within 1–30 minutes. Funds are sent as LTC to your provided address.
             </div>
             <button class="btn btn-primary" id="wd-btn" onclick="submitWithdrawal()">Request Withdrawal</button>
           </div>
@@ -83,16 +135,36 @@
   buildSidebar("withdraw");
   buildTopbar("Withdraw Funds");
 
-  let currentUser, userData;
+  // ══════════════════════════════════════════════════════════════
+  // MAINTENANCE TOGGLE
+  // Set to true  → shows "Withdrawal Upgrade in Progress" screen
+  // Set to false → withdrawals work normally
+  // ══════════════════════════════════════════════════════════════
+  var WITHDRAWAL_MAINTENANCE = true;
 
-  requireAuth(async (user, data) => {
-    currentUser = user; userData = data;
+  var currentUser, userData;
+
+  requireAuth(function (user, data) {
+    currentUser = user;
+    userData    = data;
     populateSidebarUser(data);
 
-    const plan = PLANS[data.activePlan];
-    const canWithdraw = plan && plan.withdrawEnabled && data.tradingActive;
+    // Show available balance regardless of state
+    document.getElementById("avail-balance").textContent =
+      "$" + formatCurrency(data.walletBalance);
 
-    document.getElementById("avail-balance").textContent = `$${formatCurrency(data.walletBalance)}`;
+    // ── Maintenance overrides everything ────────────────────
+    if (WITHDRAWAL_MAINTENANCE) {
+      document.getElementById("maintenance-gate").style.display = "block";
+      document.getElementById("locked-notice").style.display    = "none";
+      document.getElementById("withdraw-form").style.display    = "none";
+      loadWithdrawalHistory(user.uid); // still show history
+      return;
+    }
+
+    // ── Normal flow ─────────────────────────────────────────
+    var plan       = PLANS[data.activePlan];
+    var canWithdraw = plan && plan.withdrawEnabled && data.tradingActive;
 
     if (!canWithdraw) {
       document.getElementById("locked-notice").style.display = "block";
@@ -102,69 +174,80 @@
     loadWithdrawalHistory(user.uid);
   });
 
-  async function submitWithdrawal() {
-    const amount  = parseFloat(document.getElementById("wd-amount").value);
-    const address = document.getElementById("wd-address").value.trim();
-    const btn     = document.getElementById("wd-btn");
+  function submitWithdrawal() {
+    // Hard block — can't be bypassed even via console
+    if (WITHDRAWAL_MAINTENANCE) {
+      showToast("Withdrawals are currently under maintenance.", "error");
+      return;
+    }
 
-    if (!amount || amount < 5)       return showToast("Minimum withdrawal is $5.", "error");
-    if (!address)                    return showToast("Please enter your LTC wallet address.", "error");
+    var amount  = parseFloat(document.getElementById("wd-amount").value);
+    var address = document.getElementById("wd-address").value.trim();
+    var btn     = document.getElementById("wd-btn");
+
+    if (!amount || amount < 5)           return showToast("Minimum withdrawal is $5.", "error");
+    if (!address)                        return showToast("Please enter your LTC wallet address.", "error");
     if (amount > userData.walletBalance) return showToast("Insufficient balance.", "error");
 
     setLoading(btn, true);
-    try {
-      await db.collection("withdrawals").add({
-        userId:        currentUser.uid,
-        amount,
-        network:       "Litecoin Network",
-        walletAddress: address,
-        status:        "pending",
-        createdAt:     firebase.firestore.FieldValue.serverTimestamp()
-      });
-      // Deduct balance immediately and log
-      const batch = db.batch();
+
+    db.collection("withdrawals").add({
+      userId:        currentUser.uid,
+      amount:        amount,
+      network:       "Litecoin Network",
+      walletAddress: address,
+      status:        "pending",
+      createdAt:     firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function () {
+      var batch = db.batch();
       batch.update(db.collection("users").doc(currentUser.uid), {
         walletBalance: firebase.firestore.FieldValue.increment(-amount)
       });
       batch.set(db.collection("transactions").doc(), {
-        userId: currentUser.uid, type:"withdrawal",
-        amount, note:"LTC withdrawal — pending approval",
+        userId:    currentUser.uid,
+        type:      "withdrawal",
+        amount:    amount,
+        note:      "LTC withdrawal — pending approval",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      await batch.commit();
-
+      return batch.commit();
+    }).then(function () {
       showToast("Withdrawal request submitted!", "success");
-      document.getElementById("wd-amount").value   = "";
-      document.getElementById("wd-address").value  = "";
-      document.getElementById("avail-balance").textContent = `$${formatCurrency(userData.walletBalance - amount)}`;
+      document.getElementById("wd-amount").value  = "";
+      document.getElementById("wd-address").value = "";
+      document.getElementById("avail-balance").textContent =
+        "$" + formatCurrency(userData.walletBalance - amount);
       userData.walletBalance -= amount;
       loadWithdrawalHistory(currentUser.uid);
-    } catch(e) {
+    }).catch(function () {
       showToast("Request failed. Please try again.", "error");
-    } finally {
+    }).finally(function () {
       setLoading(btn, false, "Request Withdrawal");
-    }
+    });
   }
 
-  async function loadWithdrawalHistory(uid) {
-    const snap = await db.collection("withdrawals")
+  function loadWithdrawalHistory(uid) {
+    db.collection("withdrawals")
       .where("userId","==",uid)
       .orderBy("createdAt","desc")
-      .limit(20).get();
-    const el = document.getElementById("wd-history");
-    if (snap.empty) return;
-    el.innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Amount</th><th>Address</th><th>Status</th><th>Date</th></tr></thead>
-      <tbody>${snap.docs.map(d => {
-        const w = d.data();
-        return `<tr>
-          <td class="mono">$${formatCurrency(w.amount)}</td>
-          <td style="font-size:.72rem;color:var(--text-2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${w.walletAddress}</td>
-          <td><span class="badge badge-${w.status==='paid'?'paid':w.status==='approved'?'approved':w.status==='rejected'?'rejected':'pending'}">${w.status}</span></td>
-          <td style="font-size:.75rem;color:var(--text-3);">${formatDate(w.createdAt)}</td>
-        </tr>`;
-      }).join("")}</tbody>
-    </table></div>`;
+      .limit(20).get()
+      .then(function (snap) {
+        var el = document.getElementById("wd-history");
+        if (snap.empty) return;
+        el.innerHTML = "<div class='table-wrap'><table>" +
+          "<thead><tr><th>Amount</th><th>Address</th><th>Status</th><th>Date</th></tr></thead><tbody>" +
+          snap.docs.map(function (d) {
+            var w = d.data();
+            return "<tr>" +
+              "<td class='mono'>$" + formatCurrency(w.amount) + "</td>" +
+              "<td style='font-size:.72rem;color:var(--text-2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>" + w.walletAddress + "</td>" +
+              "<td><span class='badge badge-" + (w.status==='paid'?'paid':w.status==='approved'?'approved':w.status==='rejected'?'rejected':'pending') + "'>" + w.status + "</span></td>" +
+              "<td style='font-size:.75rem;color:var(--text-3);'>" + formatDate(w.createdAt) + "</td>" +
+            "</tr>";
+          }).join("") +
+          "</tbody></table></div>";
+      })
+      .catch(function(){});
   }
 </script>
 <style>@media(max-width:680px){.w-grid{grid-template-columns:1fr !important;}}</style>
